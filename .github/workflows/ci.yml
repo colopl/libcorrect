@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+
+jobs:
+  Linux:
+    strategy:
+      matrix:
+        runs-on: ['ubuntu-24.04-arm', 'ubuntu-24.04']
+        platform: ['linux/arm/v8', 'linux/i386', 'linux/amd64']
+        image: ['debian:bookworm', 'alpine:3.21']
+        exclude:
+          - runs-on: 'ubuntu-24.04'
+            platform: 'linux/arm/v8'
+          - runs-on: 'ubuntu-24.04-arm'
+            platform: 'linux/i386'
+          - runs-on: 'ubuntu-24.04-arm'
+            platform: 'linux/amd64'
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build container
+        run: |
+          docker build --build-arg PLATFORM="${{ matrix.platform }}" -t ci .
+      - name: Build and test on container
+        run: |
+          docker run --rm --platform=${{ matrix.platform }} -i ci
+  macOS:
+    strategy:
+      matrix:
+        runs-on: ['macos-13', 'macos-14']
+        type: ['Debug', 'Release']
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build and test
+        run: |
+          mkdir "build"
+          cd "build"
+          cmake .. -DCMAKE_BUILD_TYPE="${{ matrix.type }}" -DENABLE_LIBCORRECT_TEST=ON
+          make -j"$(sysctl -n hw.ncpu)" shim test_runners
+          cd "tests"
+          ctest -C "${{ matrix.type }}" --output-on-failure
+  Windows:
+    strategy:
+      matrix:
+        architecture: ['x64', 'Win32']
+        type:
+          - Release
+          # - Debug
+        vs_version:
+          - { runs-on: 'windows-2019', generator: 'Visual Studio 16 2019' }
+          - { runs-on: 'windows-2022', generator: 'Visual Studio 17 2022' }
+    runs-on: ${{ matrix.vs_version.runs-on }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup Visual Studio Developer Command Prompt
+        uses: microsoft/setup-msbuild@v2
+      - name: Build and test
+        shell: cmd
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "${{ matrix.vs_version.generator }}" -A "${{ matrix.architecture }}" -DENABLE_LIBCORRECT_TEST=ON
+          cmake --build . --config "${{ matrix.type }}" --target shim
+          cmake --build . --config "${{ matrix.type }}" --target test_runners
+          cd "tests"
+          ctest -C "${{ matrix.type }}" --output-on-failure

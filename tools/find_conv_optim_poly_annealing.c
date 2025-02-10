@@ -54,8 +54,7 @@ int rand_geo(float p, int max) {
     return geo;
 }
 
-void next_neighbor(correct_convolutional_polynomial_t *start,
-                   correct_convolutional_polynomial_t *neighbor, size_t rate, size_t order) {
+void next_neighbor(correct_convolutional_polynomial_t *start, correct_convolutional_polynomial_t *neighbor, size_t rate, size_t order) {
     int coeffs[rate * (order - 2)];
     for (int i = 0; i < rate * (order - 2); i++) {
         coeffs[i] = i;
@@ -99,7 +98,7 @@ const size_t max_block_len = 16384;
 void *find_cost_thread(void *vargs) {
     thread_args *args = (thread_args *)vargs;
     conv_t *conv;
-    uint8_t *msg = malloc(max_block_len);
+    uint8_t *msg = (uint8_t *)malloc(max_block_len);
 
     conv = conv_create(args->rate, args->order, args->poly);
     args->distance = 0;
@@ -128,16 +127,16 @@ void *find_cost_thread(void *vargs) {
 
         args->distance += test_conv_noise(scratch, msg, block_len, args->bpsk_voltage);
     }
+
     conv_destroy(conv);
     free(msg);
+
     pthread_exit(NULL);
 }
 
-float find_cost(size_t rate, size_t order, correct_convolutional_polynomial_t *poly, size_t msg_len,
-                conv_testbench **scratches, size_t num_scratches, float *weights, double *eb_n0,
-                double bpsk_voltage, double bpsk_bit_energy) {
-    thread_args *args = malloc(num_scratches * sizeof(thread_args));
-    pthread_t *threads = malloc(num_scratches * sizeof(pthread_t));
+float find_cost(size_t rate, size_t order, correct_convolutional_polynomial_t *poly, size_t msg_len, conv_testbench **scratches, size_t num_scratches, float *weights, double *eb_n0, double bpsk_voltage, double bpsk_bit_energy) {
+    thread_args *args = (thread_args *)malloc(num_scratches * sizeof(thread_args));
+    pthread_t *threads = (pthread_t *)malloc(num_scratches * sizeof(pthread_t));
 
     for (size_t i = 0; i < num_scratches; i++) {
         args[i].rate = rate;
@@ -187,22 +186,14 @@ void sig_handler(int sig) {
     }
 }
 
-void search_simulated_annealing(size_t rate, size_t order, size_t n_steps, conv_tester_t *start,
-                                size_t n_bytes, conv_testbench **scratches, size_t num_scratches,
-                                float *weights, double start_temperature, double cooling_factor,
-                                double *eb_n0, double bpsk_voltage, double bpsk_bit_energy) {
+void search_simulated_annealing(size_t rate, size_t order, size_t n_steps, conv_tester_t *start, size_t n_bytes, conv_testbench **scratches, size_t num_scratches, float *weights, double start_temperature, double cooling_factor, double *eb_n0, double bpsk_voltage, double bpsk_bit_energy) {
     // perform simulated annealing to find the optimal polynomial
+    float cost = find_cost(rate, order, start->poly, n_bytes, scratches, num_scratches, weights, eb_n0, bpsk_voltage, bpsk_bit_energy);
 
-    float cost = find_cost(rate, order, start->poly, n_bytes, scratches, num_scratches, weights,
-                           eb_n0, bpsk_voltage, bpsk_bit_energy);
+    correct_convolutional_polynomial_t *neighbor_poly = (correct_convolutional_polynomial_t *)malloc(rate * sizeof(correct_convolutional_polynomial_t));
 
-    correct_convolutional_polynomial_t *neighbor_poly =
-        malloc(rate * sizeof(correct_convolutional_polynomial_t));
-
-    correct_convolutional_polynomial_t *state =
-        malloc(rate * sizeof(correct_convolutional_polynomial_t));
-    correct_convolutional_polynomial_t *best =
-        malloc(rate * sizeof(correct_convolutional_polynomial_t));
+    correct_convolutional_polynomial_t *state = (correct_convolutional_polynomial_t *)malloc(rate * sizeof(correct_convolutional_polynomial_t));
+    correct_convolutional_polynomial_t *best = (correct_convolutional_polynomial_t *)malloc(rate * sizeof(correct_convolutional_polynomial_t));
 
     float best_cost = cost;
 
@@ -254,22 +245,18 @@ void search_simulated_annealing(size_t rate, size_t order, size_t n_steps, conv_
     free(neighbor_poly);
 }
 
-void test_sa(size_t rate, size_t order, conv_tester_t start, conv_testbench **scratches,
-             size_t num_scratches, float *weights, size_t n_bytes, double *eb_n0,
-             double bpsk_bit_energy, size_t n_iter, double bpsk_voltage) {
+void test_sa(size_t rate, size_t order, conv_tester_t start, conv_testbench **scratches, size_t num_scratches, float *weights, size_t n_bytes, double *eb_n0, double bpsk_bit_energy, size_t n_iter, double bpsk_voltage) {
     for (size_t i = 0; i < n_iter; i++) {
         double temperature = (i == 0) ? 0.5 : 250;
         double cooling_factor = (i == 0) ? 0.985 : 0.95;
         size_t n_steps = (i == 0) ? 500 : 100;
 
-        search_simulated_annealing(rate, order, n_steps, &start, n_bytes, scratches, num_scratches,
-                                   weights, temperature, cooling_factor, eb_n0, bpsk_voltage,
-                                   bpsk_bit_energy);
+        search_simulated_annealing(rate, order, n_steps, &start, n_bytes, scratches, num_scratches, weights, temperature, cooling_factor, eb_n0, bpsk_voltage, bpsk_bit_energy);
     }
 }
 
 int main(int argc, char **argv) {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
     signal(SIGINT, sig_handler);
     signal(SIGTERM, sig_handler);
@@ -293,7 +280,7 @@ int main(int argc, char **argv) {
 
     conv_tester_t start;
 
-    start.poly = malloc(rate * sizeof(correct_convolutional_polynomial_t));
+    start.poly = (correct_convolutional_polynomial_t *)malloc(rate * sizeof(correct_convolutional_polynomial_t));
 
     for (size_t i = 0; i < rate; i++) {
         start.poly[i] = ((rand() % (1 << (order - 2))) << 1) + startcoeff;
@@ -303,7 +290,7 @@ int main(int argc, char **argv) {
 
     size_t num_scratches = 4;
     float *weights;
-    conv_testbench **scratches = malloc(num_scratches * sizeof(conv_testbench *));
+    conv_testbench **scratches = (conv_testbench **)malloc(num_scratches * sizeof(conv_testbench *));
     double *eb_n0;
 
     for (size_t i = 0; i < num_scratches; i++) {
@@ -336,8 +323,7 @@ int main(int argc, char **argv) {
             weights = (float[]){8000, 400, 20, 1};
     }
 
-    test_sa(rate, order, start, scratches, num_scratches, weights, n_bytes, eb_n0, bpsk_bit_energy,
-            n_iter, bpsk_voltage);
+    test_sa(rate, order, start, scratches, num_scratches, weights, n_bytes, eb_n0, bpsk_bit_energy, n_iter, bpsk_voltage);
 
     free(start.poly);
     conv_destroy(start.conv);
