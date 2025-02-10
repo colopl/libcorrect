@@ -1,0 +1,18 @@
+{
+  "name": "libcorrect",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "github.vscode-github-actions",
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.makefile-tools",
+        "maelvalais.autoconf"
+      ]
+    }
+  },
+  "build": {
+    "dockerfile": "Dockerfile"
+  }
+}

@@ -1,5 +1,6 @@
-#ifndef CORRECT_CONVOLUTIONAL
-#define CORRECT_CONVOLUTIONAL
+#ifndef CORRECT_CONVOLUTIONAL_H
+#define CORRECT_CONVOLUTIONAL_H
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -25,4 +26,5 @@ typedef enum {
     CORRECT_SOFT_LINEAR,
     CORRECT_SOFT_QUADRATIC,
 } soft_measurement_t;
-#endif
+
+#endif  /* CORRECT_CONVOLUTIONAL_H */

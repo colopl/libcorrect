@@ -1,13 +1,13 @@
-#ifndef CORRECT_FEC_H
-#define CORRECT_FEC_H
+#ifndef CORRECT_FEC_SHIM_H
+#define CORRECT_FEC_SHIM_H
+
 // libcorrect's libfec shim header
 // this is a partial implementation of libfec
 // header signatures derived from found usages of libfec -- some things may be different
 #include <correct.h>
 
 // Reed-Solomon
-void *init_rs_char(int symbol_size, int primitive_polynomial, int first_consecutive_root,
-                   int root_gap, int number_roots, unsigned int pad);
+void *init_rs_char(int symbol_size, int primitive_polynomial, int first_consecutive_root, int root_gap, int number_roots, unsigned int pad);
 void free_rs_char(void *rs);
 void encode_rs_char(void *rs, const unsigned char *msg, unsigned char *parity);
 void decode_rs_char(void *rs, unsigned char *block, int *erasure_locations, int num_erasures);
@@ -71,4 +71,4 @@ static inline int parity(unsigned int x) {
     return (0x6996 >> x) & 1;
 }
 
-#endif
+#endif  /* CORRECT_FEC_SHIM_H */

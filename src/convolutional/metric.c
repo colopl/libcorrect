@@ -5,13 +5,29 @@
 //    a^2 + b^2 + ... + n^2
 distance_t metric_soft_distance_quadratic(unsigned int hard_x, const uint8_t *soft_y, size_t len) {
     distance_t dist = 0;
-    for (unsigned int i = 0; i < len; i++) {
-        // first, convert hard_x to a soft measurement (0 -> 0, 1 - > 255)
-        unsigned int soft_x = (hard_x & 1) ? 255 : 0;
-        hard_x >>= 1;
-        int d = soft_y[i] - soft_x;
-        dist += d*d;
-    }
-    return dist >> 3;
-}
 
+    for (size_t i = 0; i < len; i++) {
+        uint8_t soft_x = (hard_x & 1) ? 0xff : 0;
+        hard_x >>= 1;
+        
+        uint16_t diff;
+        if (soft_y[i] >= soft_x) {
+            diff = soft_y[i] - soft_x;
+        } else {
+            diff = soft_x - soft_y[i];
+        }
+        
+        uint32_t squared = (uint32_t)diff * diff;
+        
+        squared >>= 3;
+
+        if (squared > (uint32_t)(65535U - dist)) {
+            dist = 65535U;
+            break;
+        }
+        
+        dist += (distance_t)squared;
+    }
+
+    return dist;
+}

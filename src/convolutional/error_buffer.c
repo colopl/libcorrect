@@ -1,7 +1,26 @@
 #include "correct/convolutional/error_buffer.h"
 
+void error_buffer_destroy(error_buffer_t *buf) {
+    if (!buf) {
+        return;
+    }
+
+    if (buf->errors[0]) {
+        free(buf->errors[0]);
+    }
+
+    if (buf->errors[1]) {
+        free(buf->errors[1]);
+    }
+
+    free(buf);
+}
+
 error_buffer_t *error_buffer_create(unsigned int num_states) {
-    error_buffer_t *buf = calloc(1, sizeof(error_buffer_t));
+    error_buffer_t *buf = (error_buffer_t *)calloc(1, sizeof(error_buffer_t));
+    if (!buf) {
+        return NULL;
+    }
 
     // how large are the error buffers?
     buf->num_states = num_states;
@@ -10,8 +29,17 @@ error_buffer_t *error_buffer_create(unsigned int num_states) {
     // (double buffer)
     // the error metric is the aggregated number of bit errors found
     //   at a given path which terminates at a particular shift register state
-    buf->errors[0] = calloc(sizeof(distance_t), num_states);
-    buf->errors[1] = calloc(sizeof(distance_t), num_states);
+    buf->errors[0] = (distance_t *)calloc(num_states, sizeof(distance_t));
+    if (!buf->errors[0]) {
+        error_buffer_destroy(buf);
+        return NULL;
+    }
+
+    buf->errors[1] = (distance_t *)calloc(num_states, sizeof(distance_t));
+    if (!buf->errors[1]) {
+        error_buffer_destroy(buf);
+        return NULL;
+    }
 
     // which buffer are we using, 0 or 1?
     buf->index = 0;
@@ -20,12 +48,6 @@ error_buffer_t *error_buffer_create(unsigned int num_states) {
     buf->write_errors = buf->errors[1];
 
     return buf;
-}
-
-void error_buffer_destroy(error_buffer_t *buf) {
-    free(buf->errors[0]);
-    free(buf->errors[1]);
-    free(buf);
 }
 
 void error_buffer_reset(error_buffer_t *buf) {

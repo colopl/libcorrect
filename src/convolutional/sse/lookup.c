@@ -1,91 +1,63 @@
+#include "correct/portable.h"
 #include "correct/convolutional/sse/lookup.h"
 
-quad_lookup_t quad_lookup_create(unsigned int rate,
-                                 unsigned int order,
-                                 const unsigned int *table) {
-    quad_lookup_t quads;
-
-    quads.keys = malloc(sizeof(unsigned int) * (1 << (order - 2)));
-    quads.outputs = calloc((1 << (rate * 4)), sizeof(unsigned int));
-    unsigned int *inv_outputs = calloc((1 << (rate * 4)), sizeof(unsigned int));
-    unsigned int output_counter = 1;
-    // for every (even-numbered) shift register state, find the concatenated output of the state
-    //   and the subsequent state that follows it (low bit set). then, check to see if this
-    //   concatenated output has a unique key assigned to it already. if not, give it a key.
-    //   if it does, retrieve the key. assign this key to the shift register state.
-    for (unsigned int i = 0; i < (1 << (order - 2)); i++) {
-        // first get the concatenated quad of outputs
-        unsigned int out = table[i * 4 + 3];
-        out <<= rate;
-        out |= table[i * 4 + 2];
-        out <<= rate;
-        out |= table[i * 4 + 1];
-        out <<= rate;
-        out |= table[i * 4];
-
-        // does this concatenated output exist in the outputs table yet?
-        if (!inv_outputs[out]) {
-            // doesn't exist, allocate a new key
-            inv_outputs[out] = output_counter;
-            quads.outputs[output_counter] = out;
-            output_counter++;
-        }
-        // set the opaque key for the ith shift register state to the concatenated output entry
-        quads.keys[i] = inv_outputs[out];
-    }
-    quads.outputs_len = output_counter;
-    quads.output_mask = (1 << (rate)) - 1;
-    quads.output_width = rate;
-    quads.distances = calloc(quads.outputs_len, sizeof(distance_quad_t));
-    free(inv_outputs);
-    return quads;
-}
-
-void quad_lookup_destroy(quad_lookup_t quads) {
-    free(quads.keys);
-    free(quads.outputs);
-    free(quads.distances);
-}
-
-void quad_lookup_fill_distance(quad_lookup_t quads, distance_t *distances) {
-    for (unsigned int i = 1; i < quads.outputs_len; i += 1) {
-        output_quad_t concat_out = quads.outputs[i];
-        unsigned int i_0 = concat_out & quads.output_mask;
-        concat_out >>= quads.output_width;
-        unsigned int i_1 = concat_out & quads.output_mask;
-        concat_out >>= quads.output_width;
-        unsigned int i_2 = concat_out & quads.output_mask;
-        concat_out >>= quads.output_width;
-        unsigned int i_3 = concat_out;
-
-        quads.distances[i] = ((uint64_t)distances[i_3] << 48) | ((uint64_t)distances[i_2] << 32) | (distances[i_1] << 16) | distances[i_0];
-    }
-}
+#include <stdlib.h>
 
 distance_oct_key_t oct_lookup_find_key(output_oct_t *outputs, output_oct_t out, size_t num_keys) {
     for (size_t i = 1; i < num_keys; i++) {
         if (outputs[i] == out) {
-            return i;
+            return (distance_oct_key_t)i;
         }
     }
+
     return 0;
 }
 
-oct_lookup_t oct_lookup_create(unsigned int rate,
-                                 unsigned int order,
-                                 const unsigned int *table) {
-    oct_lookup_t octs;
+void oct_lookup_destroy(oct_lookup_t *octs) {
+    if (octs) {
+        if (octs->keys) {
+            free(octs->keys);
+        }
 
-    octs.keys = malloc((1 << (order - 3)) * sizeof(distance_oct_key_t));
-    octs.outputs = malloc(((output_oct_t)2 << rate) * sizeof(uint64_t));
-    output_oct_t *short_outs = calloc(((output_oct_t)2 << rate), sizeof(output_oct_t));
+        if (octs->outputs) {
+            ALIGNED_FREE(octs->outputs);
+        }
+
+        if (octs->distances) {
+            ALIGNED_FREE(octs->distances);
+        }
+        
+        free(octs);
+    }
+}
+
+oct_lookup_t *oct_lookup_create(unsigned int rate, unsigned int order, const unsigned int *table) {
+    size_t outputs_size = ((output_oct_t)2 << rate) * sizeof(uint64_t);
+    oct_lookup_t *octs = calloc(1, sizeof(oct_lookup_t));
+    if (!octs) {
+        return NULL;
+    }
+
+    octs->keys = (distance_oct_key_t *)malloc((unsigned int)(1 << (order - 3)) * sizeof(distance_oct_key_t));
+    if (!octs->keys) {
+        oct_lookup_destroy(octs);
+        return NULL;
+    }
+
+    octs->outputs = (output_oct_t *)ALIGNED_MALLOC(outputs_size, 16);
+    if (!octs->outputs) {
+        oct_lookup_destroy(octs);
+        return NULL;
+    }
+
+    output_oct_t *short_outs = (output_oct_t *)calloc(((output_oct_t)2 << rate), sizeof(output_oct_t));
     size_t outputs_len = 2 << rate;
     unsigned int output_counter = 1;
     // for every (even-numbered) shift register state, find the concatenated output of the state
     //   and the subsequent state that follows it (low bit set). then, check to see if this
     //   concatenated output has a unique key assigned to it already. if not, give it a key.
     //   if it does, retrieve the key. assign this key to the shift register state.
-    for (shift_register_t i = 0; i < (1 << (order - 3)); i++) {
+    for (shift_register_t i = 0; i < (unsigned int)(1 << (order - 3)); i++) {
         // first get the concatenated oct of outputs
         output_oct_t out = table[i * 8 + 7];
         out <<= rate;
@@ -125,31 +97,42 @@ oct_lookup_t oct_lookup_create(unsigned int rate,
             expanded_out |= table[i * 8];
 
             if (output_counter == outputs_len) {
-                octs.outputs = realloc(octs.outputs, outputs_len * 2 * sizeof(output_oct_t));
+                octs->outputs = realloc(octs->outputs, outputs_len * 2 * sizeof(output_oct_t));
+                if (!octs->outputs) {
+                    oct_lookup_destroy(octs);
+                    return NULL;
+                }
+
                 short_outs = realloc(short_outs, outputs_len * 2 * sizeof(output_oct_t));
+                if (!short_outs) {
+                    oct_lookup_destroy(octs);
+                    return NULL;
+                }
+
                 outputs_len *= 2;
             }
             short_outs[output_counter] = out;
-            octs.outputs[output_counter] = expanded_out;
-            key = output_counter;
+            octs->outputs[output_counter] = expanded_out;
+            key = (distance_oct_key_t)output_counter;
             output_counter++;
         }
         // set the opaque key for the ith shift register state to the concatenated output entry
         // we multiply the key by 2 since the distances are strided by 2
-        octs.keys[i] = key * 2;
+        octs->keys[i] = key * 2;
     }
-    free(short_outs);
-    octs.outputs_len = output_counter;
-    octs.output_mask = (1 << (rate)) - 1;
-    octs.output_width = rate;
-    octs.distances = malloc(octs.outputs_len * 2 * sizeof(uint64_t));
-    return octs;
-}
 
-void oct_lookup_destroy(oct_lookup_t octs) {
-    free(octs.keys);
-    free(octs.outputs);
-    free(octs.distances);
+    free(short_outs);
+    octs->outputs_len = output_counter;
+    octs->output_mask = (1 << (rate)) - 1;
+    octs->output_width = rate;
+
+    octs->distances = (distance_oct_t *)ALIGNED_MALLOC(octs->outputs_len * 2 * sizeof(uint64_t), 16);
+    if (!octs->distances) {
+        oct_lookup_destroy(octs);
+        return NULL;
+    }
+
+    return octs;
 }
 
 // WIP: sse approach to filling the distance table
