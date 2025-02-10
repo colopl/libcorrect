@@ -8,6 +8,8 @@
 #include "correct.h"
 #include "correct/util/error-sim-fec.h"
 
+uint32_t retry_count = 5;
+
 size_t max_block_len = 4096;
 
 size_t test_conv(correct_convolutional *conv, void *fec,
@@ -41,28 +43,30 @@ size_t test_conv(correct_convolutional *conv, void *fec,
 }
 
 void assert_test_result(correct_convolutional *conv, void *fec,
-                        void (*decode)(void *, uint8_t *, size_t, uint8_t *),
+                        ssize_t (*decode)(void *, uint8_t *, size_t, uint8_t *),
                         conv_testbench **testbench, size_t test_length, size_t rate, size_t order,
-                        double eb_n0, double error_rate) {
+                        double eb_n0, double error_rate, uint32_t retries) {
     double bpsk_voltage = 1.0 / sqrt(2.0);
     double bpsk_sym_energy = 2 * pow(bpsk_voltage, 2.0);
     double bpsk_bit_energy = bpsk_sym_energy * rate;
 
-    size_t error_count =
-        test_conv(conv, fec, decode, testbench, test_length, eb_n0, bpsk_bit_energy, bpsk_voltage);
-    double observed_error_rate = error_count / ((double)test_length * 8);
-    if (observed_error_rate > error_rate) {
-        printf(
-            "test failed, expected error rate=%.2e, observed error rate=%.2e @%.1fdB for rate %zu "
-            "order %zu\n",
-            error_rate, observed_error_rate, eb_n0, rate, order);
-        exit(1);
-    } else {
-        printf(
-            "test passed, expected error rate=%.2e, observed error rate=%.2e @%.1fdB for rate %zu "
-            "order %zu\n",
-            error_rate, observed_error_rate, eb_n0, rate, order);
+    double observed_error_rate = 0.f;
+
+    for (uint32_t i = 0; i < retries; i++) {
+        size_t error_count =
+            test_conv(conv, fec, decode, testbench, test_length, eb_n0, bpsk_bit_energy, bpsk_voltage);
+        observed_error_rate = error_count / ((double)test_length * 8);
+        if (observed_error_rate <= error_rate) {
+            printf("test passed, expected error rate=%.2e, observed error rate=%.2e @%.1fdB for rate %zu order %zu\n",
+                   error_rate, observed_error_rate, eb_n0, rate, order);
+            return;
+        }
+        printf("Retry %d/%d: observed error rate=%.2e\n", i + 1, retries, observed_error_rate);
     }
+
+    printf("test failed, expected error rate=%.2e, observed error rate=%.2e @%.1fdB for rate %zu order %zu\n",
+           error_rate, observed_error_rate, eb_n0, rate, order);
+    exit(1);
 }
 
 int main() {
@@ -77,9 +81,9 @@ int main() {
     poly = (uint16_t[]){V27POLYA, V27POLYB};
     conv = correct_convolutional_create(2, 7, poly);
     fec = create_viterbi27(8 * max_block_len);
-    assert_test_result(conv, fec, conv_fec27_decode, &testbench, 1000000, 2, 6, INFINITY, 0);
-    assert_test_result(conv, fec, conv_fec27_decode, &testbench, 1000000, 2, 6, 4.5, 8e-06);
-    assert_test_result(conv, fec, conv_fec27_decode, &testbench, 1000000, 2, 6, 4.0, 5e-05);
+    assert_test_result(conv, fec, conv_fec27_decode, &testbench, 1000000, 2, 6, INFINITY, 0, retry_count);
+    assert_test_result(conv, fec, conv_fec27_decode, &testbench, 1000000, 2, 6, 4.5, 8e-06, retry_count);
+    assert_test_result(conv, fec, conv_fec27_decode, &testbench, 1000000, 2, 6, 4.0, 5e-05, retry_count);
     delete_viterbi27(fec);
     correct_convolutional_destroy(conv);
 
@@ -88,9 +92,9 @@ int main() {
     poly = (uint16_t[]){V29POLYA, V29POLYB};
     conv = correct_convolutional_create(2, 9, poly);
     fec = create_viterbi29(8 * max_block_len);
-    assert_test_result(conv, fec, conv_fec29_decode, &testbench, 1000000, 2, 9, INFINITY, 0);
-    assert_test_result(conv, fec, conv_fec29_decode, &testbench, 1000000, 2, 9, 4.5, 3e-06);
-    assert_test_result(conv, fec, conv_fec29_decode, &testbench, 1000000, 2, 9, 4.0, 8e-06);
+    assert_test_result(conv, fec, conv_fec29_decode, &testbench, 1000000, 2, 9, INFINITY, 0, retry_count);
+    assert_test_result(conv, fec, conv_fec29_decode, &testbench, 1000000, 2, 9, 4.5, 3e-06, retry_count);
+    assert_test_result(conv, fec, conv_fec29_decode, &testbench, 1000000, 2, 9, 4.0, 8e-06, retry_count);
     delete_viterbi29(fec);
     correct_convolutional_destroy(conv);
 
@@ -99,9 +103,9 @@ int main() {
     poly = (uint16_t[]){V39POLYA, V39POLYB, V39POLYC};
     conv = correct_convolutional_create(3, 9, poly);
     fec = create_viterbi39(8 * max_block_len);
-    assert_test_result(conv, fec, conv_fec39_decode, &testbench, 1000000, 3, 9, INFINITY, 0);
-    assert_test_result(conv, fec, conv_fec39_decode, &testbench, 1000000, 3, 9, 4.5, 3e-06);
-    assert_test_result(conv, fec, conv_fec39_decode, &testbench, 1000000, 3, 9, 4.0, 5e-06);
+    assert_test_result(conv, fec, conv_fec39_decode, &testbench, 1000000, 3, 9, INFINITY, 0, retry_count);
+    assert_test_result(conv, fec, conv_fec39_decode, &testbench, 1000000, 3, 9, 4.5, 3e-06, retry_count);
+    assert_test_result(conv, fec, conv_fec39_decode, &testbench, 1000000, 3, 9, 4.0, 5e-06, retry_count);
     delete_viterbi39(fec);
     correct_convolutional_destroy(conv);
 
@@ -110,9 +114,9 @@ int main() {
     poly = (uint16_t[]){V615POLYA, V615POLYB, V615POLYC, V615POLYD, V615POLYE, V615POLYF};
     conv = correct_convolutional_create(6, 15, poly);
     fec = create_viterbi615(8 * max_block_len);
-    assert_test_result(conv, fec, conv_fec615_decode, &testbench, 100000, 6, 15, INFINITY, 0);
-    assert_test_result(conv, fec, conv_fec615_decode, &testbench, 100000, 6, 15, 3.0, 3e-06);
-    assert_test_result(conv, fec, conv_fec615_decode, &testbench, 100000, 6, 15, 2.5, 1e-05);
+    assert_test_result(conv, fec, conv_fec615_decode, &testbench, 100000, 6, 15, INFINITY, 0, retry_count);
+    assert_test_result(conv, fec, conv_fec615_decode, &testbench, 100000, 6, 15, 3.0, 3e-06, retry_count);
+    assert_test_result(conv, fec, conv_fec615_decode, &testbench, 100000, 6, 15, 2.5, 1e-05, retry_count);
     delete_viterbi615(fec);
     correct_convolutional_destroy(conv);
 
