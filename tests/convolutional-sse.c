@@ -37,14 +37,14 @@ size_t test_conv(correct_convolutional_sse *conv, conv_testbench **testbench_ptr
     return num_errors;
 }
 
-void assert_test_result(correct_convolutional *conv, conv_testbench **testbench,
+void assert_test_result(correct_convolutional_sse *conv, conv_testbench **testbench,
                         size_t test_length, size_t rate, size_t order, double eb_n0, double error_rate, uint32_t retries) {
     double bpsk_voltage = 1.0/sqrt(2.0);
     double bpsk_sym_energy = 2*pow(bpsk_voltage, 2.0);
     double bpsk_bit_energy = bpsk_sym_energy * rate;
 
     size_t error_count;
-    double observed_error_rate;
+    double observed_error_rate = 0.f;
 
     for (uint32_t i = 0; i < retries; i++) {
         error_count = test_conv(conv, testbench, test_length, eb_n0, bpsk_bit_energy, bpsk_voltage);
