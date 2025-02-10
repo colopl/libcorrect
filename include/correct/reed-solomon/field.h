@@ -29,8 +29,8 @@ static inline field_t field_create(field_operation_t primitive_poly) {
     // bits are in GF(2), compute alpha^val in GF(2^8)
     // exp should be of size 512 so that it can hold a "wraparound" which prevents some modulo ops
     // log should be of size 256. no wraparound here, the indices into this table are field elements
-    field_element_t *exp = malloc(512 * sizeof(field_element_t));
-    field_logarithm_t *log = malloc(256 * sizeof(field_logarithm_t));
+    field_element_t *exp = (field_element_t *)malloc(512 * sizeof(field_element_t));
+    field_logarithm_t *log = (field_logarithm_t *)malloc(256 * sizeof(field_logarithm_t));
 
     // assume alpha is a primitive element, p(x) (primitive_poly) irreducible in GF(2^8)
     // addition is xor
@@ -66,15 +66,15 @@ static inline void field_destroy(field_t field) {
     free(*(field_element_t **)&field.log);
 }
 
-static inline field_element_t field_add(field_t field, field_element_t l, field_element_t r) {
+static inline field_element_t field_add(field_t field __attribute__((unused)), field_element_t l, field_element_t r) {
     return l ^ r;
 }
 
-static inline field_element_t field_sub(field_t field, field_element_t l, field_element_t r) {
+static inline field_element_t field_sub(field_t field __attribute__((unused)), field_element_t l, field_element_t r) {
     return l ^ r;
 }
 
-static inline field_element_t field_sum(field_t field, field_element_t elem, unsigned int n) {
+static inline field_element_t field_sum(field_t field __attribute__((unused)), field_element_t elem, unsigned int n) {
     // we'll do a closed-form expression of the sum, although we could also
     //   choose to call field_add n times
 
@@ -128,7 +128,7 @@ static inline field_element_t field_div(field_t field, field_element_t l, field_
     return field.exp[res];
 }
 
-static inline field_logarithm_t field_mul_log(field_t field, field_logarithm_t l, field_logarithm_t r) {
+static inline field_logarithm_t field_mul_log(field_t field __attribute__((unused)), field_logarithm_t l, field_logarithm_t r) {
     // this function performs the equivalent of field_mul on two logarithms
     // we save a little time by skipping the lookup step at the beginning
     field_operation_t res = (field_operation_t)l + (field_operation_t)r;
@@ -143,7 +143,7 @@ static inline field_logarithm_t field_mul_log(field_t field, field_logarithm_t l
     return (field_logarithm_t)res;
 }
 
-static inline field_logarithm_t field_div_log(field_t field, field_logarithm_t l, field_logarithm_t r) {
+static inline field_logarithm_t field_div_log(field_t field __attribute__((unused)), field_logarithm_t l, field_logarithm_t r) {
     // like field_mul_log, this performs field_div without going through a field_element_t
     field_operation_t res = (field_operation_t)255 + (field_operation_t)l - (field_operation_t)r;
     if (res > 255) {
