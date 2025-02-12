@@ -19,7 +19,7 @@ bool trypoly(field_operation_t poly, field_logarithm_t *log) {
     return true;
 }
 
-int main() {
+int main(void) {
     field_logarithm_t *log = malloc((block_size + 1) * sizeof(field_logarithm_t));
     for (field_operation_t i = (block_size + 1); i < (block_size + 1) << 1; i++) {
         if (trypoly(i, log)) {

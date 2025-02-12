@@ -44,7 +44,7 @@ if(NOT CMAKE_CROSSCOMPILING)
   set(CMAKE_REQUIRED_DEFINITIONS -march=native)
   check_c_source_compiles("
     #include <x86intrin.h>
-    int main() {
+    int main(void) {
       __m128i a;
       __m128i b;
       __m128i c = _mm_min_epu16(a, b);

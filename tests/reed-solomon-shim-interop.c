@@ -15,12 +15,12 @@ void print_test_type(size_t block_length, size_t message_length,
         block_length, message_length, num_errors, num_erasures);
 }
 
-void fail_test() {
+void fail_test(void) {
     printf("FAILED\n");
     exit(1);
 }
 
-void pass_test() { printf("PASSED\n"); }
+void pass_test(void) { printf("PASSED\n"); }
 
 void run_tests(correct_reed_solomon *rs, void *fec_rs, rs_testbench *testbench,
                size_t block_length, size_t test_msg_length, size_t num_errors,
@@ -55,7 +55,7 @@ void run_tests(correct_reed_solomon *rs, void *fec_rs, rs_testbench *testbench,
     pass_test();
 }
 
-int main() {
+int main(void) {
     srand(time(NULL));
 
     size_t block_length = 255;

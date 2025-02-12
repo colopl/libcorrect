@@ -234,7 +234,7 @@ void find_poly(size_t rate, size_t order, libfec_decoder_t libfec, correct_convo
     printf("\n");
 }
 
-int main() {
+int main(void) {
     libfec_decoder_t libfec;
 
     srand(time(NULL));
