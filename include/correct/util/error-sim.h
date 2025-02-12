@@ -39,7 +39,7 @@ typedef struct {
 
 conv_testbench *resize_conv_testbench(conv_testbench *scratch, size_t (*enclen)(void *, size_t), void *enc, size_t msg_len);
 void free_scratch(conv_testbench *scratch);
-int test_conv_noise(conv_testbench *scratch, uint8_t *msg, size_t n_bytes,
+size_t test_conv_noise(conv_testbench *scratch, uint8_t *msg, size_t n_bytes,
                     double bpsk_voltage);
 
 size_t conv_correct_enclen(void *conv_v, size_t msg_len);

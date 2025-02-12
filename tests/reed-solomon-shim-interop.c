@@ -56,13 +56,13 @@ void run_tests(correct_reed_solomon *rs, void *fec_rs, rs_testbench *testbench,
 }
 
 int main(void) {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
     size_t block_length = 255;
-    size_t min_distance = 32;
-    size_t message_length = block_length - min_distance;
+    int min_distance = 32;
+    int message_length = block_length - min_distance;
 
-    size_t pad_length;
+    unsigned int pad_length;
     void *fec_rs;
 
     correct_reed_solomon *rs = correct_reed_solomon_create(

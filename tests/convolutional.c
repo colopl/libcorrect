@@ -64,7 +64,7 @@ void assert_test_result(correct_convolutional *conv, conv_testbench **testbench,
 }
 
 int main(void) {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
     conv_testbench *testbench = NULL;
 

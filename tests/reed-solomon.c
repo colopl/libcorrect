@@ -41,7 +41,7 @@ void run_tests(correct_reed_solomon *rs, rs_testbench *testbench,
 }
 
 int main(void) {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
     size_t block_length = 255;
     size_t min_distance = 32;

@@ -69,7 +69,7 @@ void assert_test_result(correct_convolutional *conv, void *fec,
 }
 
 int main(void) {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
     conv_testbench *testbench = NULL;
 
@@ -79,7 +79,7 @@ int main(void) {
 
     poly = (uint16_t[]){V27POLYA, V27POLYB};
     conv = correct_convolutional_create(2, 7, poly);
-    fec = create_viterbi27(8 * max_block_len);
+    fec = create_viterbi27((int)(8 * max_block_len));
     assert_test_result(conv, fec, conv_shim27_decode, &testbench, 1000000, 2, 6, INFINITY, 0, retry_count);
     assert_test_result(conv, fec, conv_shim27_decode, &testbench, 1000000, 2, 6, 4.5, 8e-06, retry_count);
     assert_test_result(conv, fec, conv_shim27_decode, &testbench, 1000000, 2, 6, 4.0, 5e-05, retry_count);
@@ -90,7 +90,7 @@ int main(void) {
 
     poly = (uint16_t[]){V29POLYA, V29POLYB};
     conv = correct_convolutional_create(2, 9, poly);
-    fec = create_viterbi29(8 * max_block_len);
+    fec = create_viterbi29((int)(8 * max_block_len));
     assert_test_result(conv, fec, conv_shim29_decode, &testbench, 1000000, 2, 9, INFINITY, 0, retry_count);
     assert_test_result(conv, fec, conv_shim29_decode, &testbench, 1000000, 2, 9, 4.5, 3e-06, retry_count);
     assert_test_result(conv, fec, conv_shim29_decode, &testbench, 1000000, 2, 9, 4.0, 8e-06, retry_count);
@@ -101,7 +101,7 @@ int main(void) {
 
     poly = (uint16_t[]){V39POLYA, V39POLYB, V39POLYC};
     conv = correct_convolutional_create(3, 9, poly);
-    fec = create_viterbi39(8 * max_block_len);
+    fec = create_viterbi39((int)(8 * max_block_len));
     assert_test_result(conv, fec, conv_shim39_decode, &testbench, 1000000, 3, 9, INFINITY, 0, retry_count);
     assert_test_result(conv, fec, conv_shim39_decode, &testbench, 1000000, 3, 9, 4.5, 3e-06, retry_count);
     assert_test_result(conv, fec, conv_shim39_decode, &testbench, 1000000, 3, 9, 4.0, 9e-06, retry_count);
@@ -112,7 +112,7 @@ int main(void) {
 
     poly = (uint16_t[]){V615POLYA, V615POLYB, V615POLYC, V615POLYD, V615POLYE, V615POLYF};
     conv = correct_convolutional_create(6, 15, poly);
-    fec = create_viterbi615(8 * max_block_len);
+    fec = create_viterbi615((int)(8 * max_block_len));
     assert_test_result(conv, fec, conv_shim615_decode, &testbench, 100000, 6, 15, INFINITY, 0, retry_count);
     assert_test_result(conv, fec, conv_shim615_decode, &testbench, 100000, 6, 15, 3.0, 2e-05, retry_count);
     assert_test_result(conv, fec, conv_shim615_decode, &testbench, 100000, 6, 15, 2.5, 4e-05, retry_count);

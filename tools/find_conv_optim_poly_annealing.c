@@ -269,7 +269,7 @@ void test_sa(size_t rate, size_t order, conv_tester_t start, conv_testbench **sc
 }
 
 int main(int argc, char **argv) {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
     signal(SIGINT, sig_handler);
     signal(SIGTERM, sig_handler);

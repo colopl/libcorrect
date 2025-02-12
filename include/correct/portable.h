@@ -15,6 +15,9 @@ static inline int popcount(int x) {
     return ((x + (x >> 4) & 0x0f0f0f0f) * 0x01010101) >> 24;
 }
 
-static inline void prefetch(void *x) {}
+static inline void prefetch(const void *x) 
+{
+    (void)x;
+}
 
 #endif

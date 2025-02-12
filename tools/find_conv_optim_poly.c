@@ -261,7 +261,7 @@ void test(size_t rate, size_t order,
 }
 
 int main(int argc, char **argv) {
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
 
     size_t rate, order, n_bytes, n_iter;
 

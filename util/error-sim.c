@@ -154,7 +154,7 @@ void free_scratch(conv_testbench *scratch) {
     free(scratch);
 }
 
-int test_conv_noise(conv_testbench *scratch, uint8_t *msg, size_t n_bytes,
+size_t test_conv_noise(conv_testbench *scratch, uint8_t *msg, size_t n_bytes,
                     double bpsk_voltage) {
     scratch->encode(scratch->encoder, msg, n_bytes, scratch->encoded);
     encode_bpsk(scratch->encoded, scratch->v, scratch->enclen, bpsk_voltage);
@@ -167,8 +167,8 @@ int test_conv_noise(conv_testbench *scratch, uint8_t *msg, size_t n_bytes,
 
     ssize_t decode_len = scratch->decode(scratch->decoder, scratch->soft, scratch->enclen, scratch->msg_out);
 
-    if (decode_len != n_bytes) {
-        printf("expected to decode %zu bytes, decoded %d bytes instead\n", n_bytes, decode_len);
+    if ((size_t)decode_len != n_bytes) {
+        printf("expected to decode %zu bytes, decoded %ld bytes instead\n", n_bytes, decode_len);
         exit(1);
     }
 
