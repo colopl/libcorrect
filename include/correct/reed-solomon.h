@@ -41,19 +41,19 @@ struct correct_reed_solomon {
 
     field_t *field;
 
-    polynomial_t generator;
+    polynomial_t *generator;
     field_element_t *generator_roots;
     field_logarithm_t **generator_root_exp;
 
-    polynomial_t encoded_polynomial;
-    polynomial_t encoded_remainder;
+    polynomial_t *encoded_polynomial;
+    polynomial_t *encoded_remainder;
 
     field_element_t *syndromes;
     field_element_t *modified_syndromes;
-    polynomial_t received_polynomial;
-    polynomial_t error_locator;
-    polynomial_t error_locator_log;
-    polynomial_t erasure_locator;
+    polynomial_t *received_polynomial;
+    polynomial_t *error_locator;
+    polynomial_t *error_locator_log;
+    polynomial_t *erasure_locator;
     field_element_t *error_roots;
     field_element_t *error_vals;
     field_logarithm_t *error_locations;
@@ -64,12 +64,12 @@ struct correct_reed_solomon {
     // (do no allocations at steady state)
 
     // used during find_error_locator
-    polynomial_t last_error_locator;
+    polynomial_t *last_error_locator;
 
     // used during error value search
-    polynomial_t error_evaluator;
-    polynomial_t error_locator_derivative;
-    polynomial_t init_from_roots_scratch[2];
+    polynomial_t *error_evaluator;
+    polynomial_t *error_locator_derivative;
+    polynomial_t *init_from_roots_scratch[2];
     bool has_init_decode;
 
 };
