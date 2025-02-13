@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(Correct
-        VERSION 1.0.0
+        VERSION 2.0.0
         LANGUAGES C
         DESCRIPTION "Forward Error Correction Library")
 
@@ -29,19 +29,21 @@ else()
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_compile_options(-g3 -O0)
-        # Sanitizer options
-        option(USE_ASAN "Use AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
-        option(USE_MSAN "Use MemorySanitizer" ON)
-        
-        if(USE_MSAN)
-            if(USE_ASAN)
-                message(FATAL_ERROR "MemorySanitizer cannot be used with AddressSanitizer")
-            endif()
-            add_compile_options(-fsanitize=memory -fno-optimize-sibling-calls -fno-omit-frame-pointer)
-            add_link_options(-fsanitize=memory)
-        elseif(USE_ASAN)
-            add_compile_options(-fsanitize=address,undefined -fno-optimize-sibling-calls -fno-omit-frame-pointer)
-            add_link_options(-fsanitize=address,undefined)
+        if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+            # Sanitizer options
+            option(USE_ASAN_UBSAN "Use AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+            option(USE_MSAN "Use MemorySanitizer" ON)
+            
+            if(USE_MSAN AND HAVE_MSAN)
+                if(USE_ASAN_UBSAN)
+                    message(FATAL_ERROR "MemorySanitizer cannot be used with AddressSanitizer")
+                endif()
+                add_compile_options(-fsanitize=memory -fno-optimize-sibling-calls -fno-omit-frame-pointer)
+                add_link_options(-fsanitize=memory)
+            elseif(USE_ASAN_UBSAN AND HAVE_ASAN_UBSAN)
+                add_compile_options(-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer)
+                add_link_options(-fsanitize=address)
+            endif()        
         endif()
     else()
         add_compile_options(-O2)
