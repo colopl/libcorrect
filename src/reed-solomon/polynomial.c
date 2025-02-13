@@ -14,7 +14,7 @@ void polynomial_destroy(polynomial_t polynomial) {
 // if you want a full multiplication, then make res.order = l.order + r.order
 // but if you just care about a lower order, e.g. mul mod x^i, then you can select
 //    fewer coefficients
-void polynomial_mul(field_t field, polynomial_t l, polynomial_t r, polynomial_t res) {
+void polynomial_mul(field_t *field, polynomial_t l, polynomial_t r, polynomial_t res) {
     // perform an element-wise multiplication of two polynomials
     memset(res.coeff, 0, sizeof(field_element_t) * (res.order + 1));
     for (unsigned int i = 0; i <= l.order; i++) {
@@ -29,7 +29,7 @@ void polynomial_mul(field_t field, polynomial_t l, polynomial_t r, polynomial_t 
     }
 }
 
-void polynomial_mod(field_t field, polynomial_t dividend, polynomial_t divisor, polynomial_t mod) {
+void polynomial_mod(field_t *field, polynomial_t dividend, polynomial_t divisor, polynomial_t mod) {
     // find the polynomial remainder of dividend mod divisor
     // do long division and return just the remainder (written to mod)
 
@@ -42,7 +42,7 @@ void polynomial_mod(field_t field, polynomial_t dividend, polynomial_t divisor, 
     memcpy(mod.coeff, dividend.coeff, sizeof(field_element_t) * (dividend.order + 1));
 
     // XXX make sure divisor[divisor_order] is nonzero
-    field_logarithm_t divisor_leading = field.log[divisor.coeff[divisor.order]];
+    field_logarithm_t divisor_leading = field->log[divisor.coeff[divisor.order]];
     // long division steps along one order at a time, starting at the highest order
     for (unsigned int i = dividend.order; i > 0; i--) {
         // look at the leading coefficient of dividend and divisor
@@ -56,7 +56,7 @@ void polynomial_mod(field_t field, polynomial_t dividend, polynomial_t divisor, 
             continue;
         }
         unsigned int q_order = i - divisor.order;
-        field_logarithm_t q_coeff = field_div_log(field, field.log[mod.coeff[i]], divisor_leading);
+        field_logarithm_t q_coeff = field_div_log(field, field->log[mod.coeff[i]], divisor_leading);
 
         // now that we've chosen q, multiply the divisor by q and subtract from
         //   our remainder. subtracting in GF(2^8) is XOR, just like addition
@@ -66,12 +66,12 @@ void polynomial_mod(field_t field, polynomial_t dividend, polynomial_t divisor, 
             }
             // all of the multiplication is shifted up by q_order places
             mod.coeff[j + q_order] = field_add(field, mod.coeff[j + q_order],
-                        field_mul_log_element(field, field.log[divisor.coeff[j]], q_coeff));
+                        field_mul_log_element(field, field->log[divisor.coeff[j]], q_coeff));
         }
     }
 }
 
-void polynomial_formal_derivative(field_t field, polynomial_t poly, polynomial_t der) {
+void polynomial_formal_derivative(field_t *field, polynomial_t poly, polynomial_t der) {
     // if f(x) = a(n)*x^n + ... + a(1)*x + a(0)
     // then f'(x) = n*a(n)*x^(n-1) + ... + 2*a(2)*x + a(1)
     // where n*a(n) = sum(k=1, n, a(n)) e.g. the nth sum of a(n) in GF(2^8)
@@ -86,7 +86,7 @@ void polynomial_formal_derivative(field_t field, polynomial_t poly, polynomial_t
     }
 }
 
-field_element_t polynomial_eval(field_t field, polynomial_t poly, field_element_t val) {
+field_element_t polynomial_eval(field_t *field, polynomial_t poly, field_element_t val) {
     // evaluate the polynomial poly at a particular element val
     if (val == 0) {
         return poly.coeff[0];
@@ -95,14 +95,14 @@ field_element_t polynomial_eval(field_t field, polynomial_t poly, field_element_
     field_element_t res = 0;
 
     // we're going to start at 0th order and multiply by val each time
-    field_logarithm_t val_exponentiated = field.log[1];
-    field_logarithm_t val_log = field.log[val];
+    field_logarithm_t val_exponentiated = field->log[1];
+    field_logarithm_t val_log = field->log[val];
 
     for (unsigned int i = 0; i <= poly.order; i++) {
         if (poly.coeff[i] != 0) {
             // multiply-accumulate by the next coeff times the next power of val
             res = field_add(field, res,
-                    field_mul_log_element(field, field.log[poly.coeff[i]], val_exponentiated));
+                    field_mul_log_element(field, field->log[poly.coeff[i]], val_exponentiated));
         }
         // now advance to the next power
         val_exponentiated = field_mul_log(field, val_exponentiated, val_log);
@@ -110,7 +110,7 @@ field_element_t polynomial_eval(field_t field, polynomial_t poly, field_element_
     return res;
 }
 
-field_element_t polynomial_eval_lut(field_t field, polynomial_t poly, const field_logarithm_t *val_exp) {
+field_element_t polynomial_eval_lut(field_t *field, polynomial_t poly, const field_logarithm_t *val_exp) {
     // evaluate the polynomial poly at a particular element val
     // in this case, all of the logarithms of the successive powers of val have been precalculated
     // this removes the extra work we'd have to do to calculate val_exponentiated each time
@@ -125,13 +125,13 @@ field_element_t polynomial_eval_lut(field_t field, polynomial_t poly, const fiel
         if (poly.coeff[i] != 0) {
             // multiply-accumulate by the next coeff times the next power of val
             res = field_add(field, res,
-                    field_mul_log_element(field, field.log[poly.coeff[i]], val_exp[i]));
+                    field_mul_log_element(field, field->log[poly.coeff[i]], val_exp[i]));
         }
     }
     return res;
 }
 
-field_element_t polynomial_eval_log_lut(field_t field, polynomial_t poly_log, const field_logarithm_t *val_exp) {
+field_element_t polynomial_eval_log_lut(field_t *field, polynomial_t poly_log, const field_logarithm_t *val_exp) {
     // evaluate the log_polynomial poly at a particular element val
     // like polynomial_eval_lut, the logarithms of the successive powers of val have been
     //   precomputed
@@ -140,7 +140,7 @@ field_element_t polynomial_eval_log_lut(field_t field, polynomial_t poly_log, co
             // special case for the non-existant log case
             return 0;
         }
-        return field.exp[poly_log.coeff[0]];
+        return field->exp[poly_log.coeff[0]];
     }
 
     field_element_t res = 0;
@@ -156,10 +156,10 @@ field_element_t polynomial_eval_log_lut(field_t field, polynomial_t poly_log, co
     return res;
 }
 
-void polynomial_build_exp_lut(field_t field, field_element_t val, unsigned int order, field_logarithm_t *val_exp) {
+void polynomial_build_exp_lut(field_t *field, field_element_t val, unsigned int order, field_logarithm_t *val_exp) {
     // create the lookup table of successive powers of val used by polynomial_eval_lut
-    field_logarithm_t val_exponentiated = field.log[1];
-    field_logarithm_t val_log = field.log[val];
+    field_logarithm_t val_exponentiated = field->log[1];
+    field_logarithm_t val_log = field->log[val];
     for (unsigned int i = 0; i <= order; i++) {
         if (val == 0) {
             val_exp[i] = 0;
@@ -170,7 +170,7 @@ void polynomial_build_exp_lut(field_t field, field_element_t val, unsigned int o
     }
 }
 
-polynomial_t polynomial_init_from_roots(field_t field, unsigned int nroots, field_element_t *roots, polynomial_t poly, polynomial_t *scratch) {
+polynomial_t polynomial_init_from_roots(field_t *field, unsigned int nroots, field_element_t *roots, polynomial_t poly, polynomial_t *scratch) {
     unsigned int order = nroots;
     polynomial_t l;
     field_element_t l_coeff[2];
@@ -210,7 +210,7 @@ polynomial_t polynomial_init_from_roots(field_t field, unsigned int nroots, fiel
     return poly;
 }
 
-polynomial_t polynomial_create_from_roots(field_t field, unsigned int nroots, field_element_t *roots) {
+polynomial_t polynomial_create_from_roots(field_t *field, unsigned int nroots, field_element_t *roots) {
     polynomial_t poly = polynomial_create(nroots);
     unsigned int order = nroots;
     polynomial_t l;

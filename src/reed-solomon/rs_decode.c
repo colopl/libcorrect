@@ -9,7 +9,7 @@
 //   these syndromes are all zero, then we can conclude the error polynomial is also
 //   zero. if they're nonzero, then we know our message received an error in transit.
 // returns true if syndromes are all zero
-static bool reed_solomon_find_syndromes(field_t field, polynomial_t msgpoly, field_logarithm_t **generator_root_exp,
+static bool reed_solomon_find_syndromes(field_t *field, polynomial_t msgpoly, field_logarithm_t **generator_root_exp,
                                         field_element_t *syndromes, size_t min_distance) {
     bool all_zero = true;
     memset(syndromes, 0, min_distance * sizeof(field_element_t));
@@ -119,7 +119,7 @@ static unsigned int reed_solomon_find_error_locator(correct_reed_solomon *rs, si
 
 // find the roots of the error locator polynomial
 // Chien search
-bool reed_solomon_factorize_error_locator(field_t field, unsigned int num_skip, polynomial_t locator_log, field_element_t *roots,
+bool reed_solomon_factorize_error_locator(field_t *field, unsigned int num_skip, polynomial_t locator_log, field_element_t *roots,
                                           field_logarithm_t **element_exp) {
     // normally it'd be tricky to find all the roots
     // but, the finite field is awfully finite...
@@ -145,7 +145,7 @@ bool reed_solomon_factorize_error_locator(field_t field, unsigned int num_skip, 
 }
 
 // use error locator and syndromes to find the error evaluator polynomial
-void reed_solomon_find_error_evaluator(field_t field, polynomial_t locator, polynomial_t syndromes,
+void reed_solomon_find_error_evaluator(field_t *field, polynomial_t locator, polynomial_t syndromes,
                                        polynomial_t error_evaluator) {
     // the error evaluator, omega(x), is S(x)*Lamba(x) mod x^(2t)
     // where S(x) is a polynomial constructed from the syndromes
@@ -198,7 +198,7 @@ void reed_solomon_find_error_values(correct_reed_solomon *rs) {
 /* Finds error locations from error roots
  * num_skip: Number of roots to skip (used for erasure decoding)
  */
-void reed_solomon_find_error_locations(field_t field, field_logarithm_t generator_root_gap,
+void reed_solomon_find_error_locations(field_t *field, field_logarithm_t generator_root_gap,
                                         field_element_t *error_roots, field_logarithm_t *error_locations,
                                         unsigned int num_errors, unsigned int num_skip) {
     // Skip the first num_skip roots (used for erasure decoding)
@@ -218,7 +218,7 @@ void reed_solomon_find_error_locations(field_t field, field_logarithm_t generato
         field_operation_t loc = field_div(field, 1, error_roots[i]);
         for (field_operation_t j = 0; j < 256; j++) {
             if (field_pow(field, j, generator_root_gap) == loc) {
-                error_locations[i] = field.log[j];
+                error_locations[i] = field->log[j];
                 break;
             }
         }
@@ -227,11 +227,11 @@ void reed_solomon_find_error_locations(field_t field, field_logarithm_t generato
 
 // erasure method -- take given locations and convert to roots
 // this is the inverse of reed_solomon_find_error_locations
-static void reed_solomon_find_error_roots_from_locations(field_t field, field_logarithm_t generator_root_gap,
+static void reed_solomon_find_error_roots_from_locations(field_t *field, field_logarithm_t generator_root_gap,
                                                          const field_logarithm_t *error_locations,
                                                          field_element_t *error_roots, unsigned int num_errors) {
     for (unsigned int i = 0; i < num_errors; i++) {
-        field_element_t loc = field_pow(field, field.exp[error_locations[i]], generator_root_gap);
+        field_element_t loc = field_pow(field, field->exp[error_locations[i]], generator_root_gap);
         // field_element_t loc = field.exp[error_locations[i]];
         error_roots[i] = field_div(field, 1, loc);
         // error_roots[i] = loc;
@@ -239,7 +239,7 @@ static void reed_solomon_find_error_roots_from_locations(field_t field, field_lo
 }
 
 // erasure method -- given the roots of the error locator, create the polynomial
-static polynomial_t reed_solomon_find_error_locator_from_roots(field_t field, unsigned int num_errors,
+static polynomial_t reed_solomon_find_error_locator_from_roots(field_t *field, unsigned int num_errors,
                                                                field_element_t *error_roots,
                                                                polynomial_t error_locator,
                                                                polynomial_t *scratch) {
@@ -360,7 +360,7 @@ ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *enc
         // that would seem bad but we'll just be using this in chien search, and we'll skip all 0 coeffs
         // (you might point out that log(1) also = 0, which would seem to alias. however, that's ok,
         //   because log(1) = 255 as well, and in fact that's how it's represented in our log table)
-        rs->error_locator_log.coeff[i] = rs->field.log[rs->error_locator.coeff[i]];
+        rs->error_locator_log.coeff[i] = rs->field->log[rs->error_locator.coeff[i]];
     }
     rs->error_locator_log.order = rs->error_locator.order;
 
@@ -473,7 +473,7 @@ ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, cons
         // that would seem bad but we'll just be using this in chien search, and we'll skip all 0 coeffs
         // (you might point out that log(1) also = 0, which would seem to alias. however, that's ok,
         //   because log(1) = 255 as well, and in fact that's how it's represented in our log table)
-        rs->error_locator_log.coeff[i] = rs->field.log[rs->error_locator.coeff[i]];
+        rs->error_locator_log.coeff[i] = rs->field->log[rs->error_locator.coeff[i]];
     }
     rs->error_locator_log.order = rs->error_locator.order;
 

@@ -39,7 +39,7 @@ struct correct_reed_solomon {
     field_logarithm_t first_consecutive_root;
     field_logarithm_t generator_root_gap;
 
-    field_t field;
+    field_t *field;
 
     polynomial_t generator;
     field_element_t *generator_roots;

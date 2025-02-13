@@ -2,17 +2,18 @@
 
 // coeff must be of size nroots + 1
 // e.g. 2 roots (x + alpha)(x + alpha^2) yields a poly with 3 terms x^2 + g0*x + g1
-static polynomial_t reed_solomon_build_generator(field_t field, unsigned int nroots, field_element_t first_consecutive_root, unsigned int root_gap, polynomial_t generator, field_element_t *roots) {
+static polynomial_t reed_solomon_build_generator(field_t *field, unsigned int nroots, field_element_t first_consecutive_root, unsigned int root_gap, polynomial_t generator, field_element_t *roots) {
     // generator has order 2*t
     // of form (x + alpha^1)(x + alpha^2)...(x - alpha^2*t)
     for (unsigned int i = 0; i < nroots; i++) {
-        roots[i] = field.exp[(root_gap * (i + first_consecutive_root)) % 255];
+        roots[i] = field->exp[(root_gap * (i + first_consecutive_root)) % 255];
     }
     return polynomial_create_from_roots(field, nroots, roots);
 }
 
 correct_reed_solomon *correct_reed_solomon_create(field_operation_t primitive_polynomial, field_logarithm_t first_consecutive_root, field_logarithm_t generator_root_gap, size_t num_roots) {
     correct_reed_solomon *rs = calloc(1, sizeof(correct_reed_solomon));
+
     rs->field = field_create(primitive_polynomial);
 
     rs->block_length = 255;
@@ -69,7 +70,7 @@ void correct_reed_solomon_destroy(correct_reed_solomon *rs) {
 
 void correct_reed_solomon_debug_print(correct_reed_solomon *rs) {
     for (unsigned int i = 0; i < 256; i++) {
-        printf("%3d  %3d    %3d  %3d\n", i, rs->field.exp[i], i, rs->field.log[i]);
+        printf("%3d  %3d    %3d  %3d\n", i, rs->field->exp[i], i, rs->field->log[i]);
     }
     printf("\n");
 
@@ -93,7 +94,7 @@ void correct_reed_solomon_debug_print(correct_reed_solomon *rs) {
 
     printf("generator (alpha format): ");
     for (unsigned int i = rs->generator.order + 1; i > 0; i--) {
-        printf("alpha^%d*x^%d", rs->field.log[rs->generator.coeff[i - 1]], i - 1);
+        printf("alpha^%d*x^%d", rs->field->log[rs->generator.coeff[i - 1]], i - 1);
         if (i > 1) {
             printf(" + ");
         }
