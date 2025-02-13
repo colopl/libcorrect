@@ -35,7 +35,7 @@ void polynomial_mul(field_t *field, polynomial_t *l, polynomial_t *r, polynomial
         unsigned int j_limit = (r->order > res->order - i) ? res->order - i : r->order;
         for (unsigned int j = 0; j <= j_limit; j++) {
             // e.g. alpha^5*x * alpha^37*x^2 --> alpha^42*x^3
-            res->coeff[i + j] = field_add(field, res->coeff[i + j], field_mul(field, l->coeff[i], r->coeff[j]));
+            res->coeff[i + j] = field_add(res->coeff[i + j], field_mul(field, l->coeff[i], r->coeff[j]));
         }
     }
 }
@@ -67,7 +67,7 @@ void polynomial_mod(field_t *field, polynomial_t *dividend, polynomial_t *diviso
             continue;
         }
         unsigned int q_order = i - divisor->order;
-        field_logarithm_t q_coeff = field_div_log(field, field->log[mod->coeff[i]], divisor_leading);
+        field_logarithm_t q_coeff = field_div_log(field->log[mod->coeff[i]], divisor_leading);
 
         // now that we've chosen q, multiply the divisor by q and subtract from
         //   our remainder. subtracting in GF(2^8) is XOR, just like addition
@@ -76,7 +76,7 @@ void polynomial_mod(field_t *field, polynomial_t *dividend, polynomial_t *diviso
                 continue;
             }
             // all of the multiplication is shifted up by q_order places
-            mod->coeff[j + q_order] = field_add(field, mod->coeff[j + q_order],
+            mod->coeff[j + q_order] = field_add(mod->coeff[j + q_order],
                         field_mul_log_element(field, field->log[divisor->coeff[j]], q_coeff));
         }
     }
@@ -93,7 +93,7 @@ void polynomial_formal_derivative(field_t *field, polynomial_t *poly, polynomial
         // we're filling in the ith power of der, so we look ahead one power in poly
         // f(x) = a(i + 1)*x^(i + 1) -> f'(x) = (i + 1)*a(i + 1)*x^i
         // where (i + 1)*a(i + 1) is the sum of a(i + 1) (i + 1) times, not the product
-        der->coeff[i] = field_sum(field, poly->coeff[i + 1], i + 1);
+        der->coeff[i] = field_sum(poly->coeff[i + 1], i + 1);
     }
 }
 
@@ -112,11 +112,11 @@ field_element_t polynomial_eval(field_t *field, polynomial_t *poly, field_elemen
     for (unsigned int i = 0; i <= poly->order; i++) {
         if (poly->coeff[i] != 0) {
             // multiply-accumulate by the next coeff times the next power of val
-            res = field_add(field, res,
+            res = field_add(res,
                     field_mul_log_element(field, field->log[poly->coeff[i]], val_exponentiated));
         }
         // now advance to the next power
-        val_exponentiated = field_mul_log(field, val_exponentiated, val_log);
+        val_exponentiated = field_mul_log(val_exponentiated, val_log);
     }
     return res;
 }
@@ -135,7 +135,7 @@ field_element_t polynomial_eval_lut(field_t *field, polynomial_t *poly, const fi
     for (unsigned int i = 0; i <= poly->order; i++) {
         if (poly->coeff[i] != 0) {
             // multiply-accumulate by the next coeff times the next power of val
-            res = field_add(field, res,
+            res = field_add(res,
                     field_mul_log_element(field, field->log[poly->coeff[i]], val_exp[i]));
         }
     }
@@ -160,7 +160,7 @@ field_element_t polynomial_eval_log_lut(field_t *field, polynomial_t *poly_log, 
         // using 0 as a sentinel value in log -- log(0) is really -inf
         if (poly_log->coeff[i] != 0) {
             // multiply-accumulate by the next coeff times the next power of val
-            res = field_add(field, res,
+            res = field_add(res,
                     field_mul_log_element(field, poly_log->coeff[i], val_exp[i]));
         }
     }
@@ -176,7 +176,7 @@ void polynomial_build_exp_lut(field_t *field, field_element_t val, unsigned int 
             val_exp[i] = 0;
         } else {
             val_exp[i] = val_exponentiated;
-            val_exponentiated = field_mul_log(field, val_exponentiated, val_log);
+            val_exponentiated = field_mul_log(val_exponentiated, val_log);
         }
     }
 }

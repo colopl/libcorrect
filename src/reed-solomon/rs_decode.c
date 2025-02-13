@@ -48,7 +48,7 @@ static unsigned int reed_solomon_find_error_locator(correct_reed_solomon *rs, si
     for (unsigned int i = rs->error_locator->order; i < rs->min_distance - num_erasures; i++) {
         discrepancy = rs->syndromes[i];
         for (unsigned int j = 1; j <= numerrors; j++) {
-            discrepancy = field_add(rs->field, discrepancy,
+            discrepancy = field_add(discrepancy,
                                     field_mul(rs->field, rs->error_locator->coeff[j], rs->syndromes[i - j]));
         }
 
@@ -82,7 +82,7 @@ static unsigned int reed_solomon_find_error_locator(correct_reed_solomon *rs, si
             for (unsigned int j = 0; j <= (rs->last_error_locator->order + delay_length); j++) {
                 temp = rs->error_locator->coeff[j];
                 rs->error_locator->coeff[j] =
-                    field_add(rs->field, rs->error_locator->coeff[j], rs->last_error_locator->coeff[j]);
+                    field_add(rs->error_locator->coeff[j], rs->last_error_locator->coeff[j]);
                 rs->last_error_locator->coeff[j] = temp;
             }
             unsigned int temp_order = rs->error_locator->order;
@@ -105,7 +105,7 @@ static unsigned int reed_solomon_find_error_locator(correct_reed_solomon *rs, si
         //    we no longer need to update last_locator
         for (unsigned int j = rs->last_error_locator->order + 1; j-- > 0;) {
             rs->error_locator->coeff[j + delay_length] =
-                field_add(rs->field, rs->error_locator->coeff[j + delay_length],
+                field_add(rs->error_locator->coeff[j + delay_length],
                           field_div(rs->field, field_mul(rs->field, rs->last_error_locator->coeff[j], discrepancy),
                                     last_discrepancy));
         }
@@ -380,7 +380,7 @@ ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *enc
 
     for (unsigned int i = 0; i < num_errors; i++) {
         rs->received_polynomial->coeff[rs->error_locations[i]] =
-            field_sub(rs->field, rs->received_polynomial->coeff[rs->error_locations[i]], rs->error_vals[i]);
+            field_sub(rs->received_polynomial->coeff[rs->error_locations[i]], rs->error_vals[i]);
     }
 
     for (unsigned int i = 0; i < msg_length; i++) {
@@ -504,7 +504,7 @@ ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, cons
 
     for (unsigned int i = 0; i < rs->error_locator->order; i++) {
         rs->received_polynomial->coeff[rs->error_locations[i]] =
-            field_sub(rs->field, rs->received_polynomial->coeff[rs->error_locations[i]], rs->error_vals[i]);
+            field_sub(rs->received_polynomial->coeff[rs->error_locations[i]], rs->error_vals[i]);
     }
 
     rs->error_locator = placeholder_poly;
