@@ -59,10 +59,9 @@ int main(void) {
     srand((unsigned int)time(NULL));
 
     size_t block_length = 255;
-    int min_distance = 32;
-    int message_length = block_length - min_distance;
-
-    unsigned int pad_length;
+    size_t min_distance = 32;
+    size_t message_length = block_length - min_distance;
+    size_t pad_length;
     void *fec_rs;
 
     correct_reed_solomon *rs = correct_reed_solomon_create(
@@ -70,8 +69,8 @@ int main(void) {
     rs_testbench *testbench = rs_testbench_create(block_length, min_distance);
 
     pad_length = message_length / 2;
-    fec_rs = init_rs_char(8, correct_rs_primitive_polynomial_ccsds, 1, 1, min_distance,
-                          pad_length);
+    fec_rs = init_rs_char(8, correct_rs_primitive_polynomial_ccsds, 1, 1, (int)min_distance,
+                          (unsigned int)pad_length);
     run_tests(rs, fec_rs, testbench, block_length, message_length - pad_length,
               0, 0, 20000);
     run_tests(rs, fec_rs, testbench, block_length, message_length - pad_length,
@@ -83,8 +82,8 @@ int main(void) {
     free_rs_char(fec_rs);
 
     pad_length = 0;
-    fec_rs = init_rs_char(8, correct_rs_primitive_polynomial_ccsds, 1, 1, min_distance,
-                          pad_length);
+    fec_rs = init_rs_char(8, correct_rs_primitive_polynomial_ccsds, 1, 1, (int)min_distance,
+                          (unsigned int)pad_length);
     run_tests(rs, fec_rs, testbench, block_length, message_length - pad_length,
               0, 0, 20000);
     run_tests(rs, fec_rs, testbench, block_length, message_length - pad_length,
@@ -105,8 +104,8 @@ int main(void) {
     testbench = rs_testbench_create(block_length, min_distance);
 
     pad_length = message_length / 2;
-    fec_rs = init_rs_char(8, correct_rs_primitive_polynomial_ccsds, 1, 1, min_distance,
-                          pad_length);
+    fec_rs = init_rs_char(8, correct_rs_primitive_polynomial_ccsds, 1, 1, (int)min_distance,
+                          (unsigned int)pad_length);
     run_tests(rs, fec_rs, testbench, block_length, message_length - pad_length,
               0, 0, 20000);
     run_tests(rs, fec_rs, testbench, block_length, message_length - pad_length,
@@ -118,8 +117,8 @@ int main(void) {
     free_rs_char(fec_rs);
 
     pad_length = 0;
-    fec_rs = init_rs_char(8, correct_rs_primitive_polynomial_ccsds, 1, 1, min_distance,
-                          pad_length);
+    fec_rs = init_rs_char(8, correct_rs_primitive_polynomial_ccsds, 1, 1, (int)min_distance,
+                          (unsigned int)pad_length);
     run_tests(rs, fec_rs, testbench, block_length, message_length - pad_length,
               0, 0, 20000);
     run_tests(rs, fec_rs, testbench, block_length, message_length - pad_length,

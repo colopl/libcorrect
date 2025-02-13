@@ -25,10 +25,10 @@ correct_reed_solomon *correct_reed_solomon_create(field_operation_t primitive_po
 
     rs->generator_roots = malloc(rs->min_distance * sizeof(field_element_t));
 
-    rs->generator = reed_solomon_build_generator(rs->field, rs->min_distance, rs->first_consecutive_root, rs->generator_root_gap, rs->generator, rs->generator_roots);
+    rs->generator = reed_solomon_build_generator(rs->field, (unsigned int)rs->min_distance, rs->first_consecutive_root, rs->generator_root_gap, rs->generator, rs->generator_roots);
 
-    rs->encoded_polynomial = polynomial_create(rs->block_length - 1);
-    rs->encoded_remainder = polynomial_create(rs->block_length - 1);
+    rs->encoded_polynomial = polynomial_create((unsigned int)(rs->block_length - 1));
+    rs->encoded_remainder = polynomial_create((unsigned int)(rs->block_length - 1));
 
     rs->has_init_decode = false;
 

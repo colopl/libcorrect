@@ -44,8 +44,8 @@ static inline void field_init(field_t *field, field_operation_t primitive_poly) 
         }
     }
 
-    *(field_element_t **)&field->exp = exp;
-    *(field_logarithm_t **)&field->log = log;
+    field->exp = exp;
+    field->log = log;
 }
 
 static inline field_t *field_create(field_operation_t primitive_poly) {
@@ -123,7 +123,7 @@ static inline field_element_t field_div(field_t *field, field_element_t l, field
     // if rcoeff is larger, then log[l] - log[r] wraps under
     // so, instead, always add 255. in some cases, we'll wrap over, but
     // that's ok because the exp table runs up to 511.
-    field_operation_t res = (field_operation_t)255 + (field_operation_t)field->log[l] - (field_operation_t)field->log[r];
+    field_operation_t res = (field_operation_t)(255 + (field_operation_t)field->log[l] - (field_operation_t)field->log[r]);
     return field->exp[res];
 }
 
@@ -144,7 +144,7 @@ static inline field_logarithm_t field_mul_log(field_logarithm_t l, field_logarit
 
 static inline field_logarithm_t field_div_log(field_logarithm_t l, field_logarithm_t r) {
     // like field_mul_log, this performs field_div without going through a field_element_t
-    field_operation_t res = (field_operation_t)255 + (field_operation_t)l - (field_operation_t)r;
+    field_operation_t res = (field_operation_t)(255 + (field_operation_t)l - (field_operation_t)r);
     if (res > 255) {
         return (field_logarithm_t)(res - 255);
     }

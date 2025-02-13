@@ -8,7 +8,7 @@
 #include "correct/convolutional/error_buffer.h"
 
 struct correct_convolutional {
-    const unsigned int *table;  // size 2**order
+    unsigned int *table;  // size 2**order
     size_t rate;                // e.g. 2, 3...
     size_t order;               // e.g. 7, 9...
     unsigned int numstates;     // 2**order

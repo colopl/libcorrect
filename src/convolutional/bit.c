@@ -53,11 +53,10 @@ void bit_writer_write_bitlist(bit_writer_t *w, uint8_t *l, size_t len) {
 
     uint16_t b = w->current_byte;
 
-    for (size_t i = 0; i < close_len; i++) {
+    for (ptrdiff_t i = 0; i < close_len; i++) {
         b |= l[i];
         b <<= 1;
     }
-
 
     l += close_len;
     len -= close_len;
@@ -88,7 +87,7 @@ void bit_writer_write_bitlist(bit_writer_t *w, uint8_t *l, size_t len) {
     len -= 8*full_bytes;
 
     b = 0;
-    for (size_t i = 0; i < len; i++) {
+    for (ptrdiff_t i = 0; i < len; i++) {
         b |= l[i];
         b <<= 1;
     }
@@ -111,7 +110,7 @@ void bit_writer_write_bitlist_reversed(bit_writer_t *w, uint8_t *l, size_t len) 
 
         b = w->current_byte;
 
-        for (size_t i = 0; i < close_len; i++) {
+        for (ptrdiff_t i = 0; i < close_len; i++) {
             b |= *l;
             b <<= 1;
             l--;
@@ -143,7 +142,7 @@ void bit_writer_write_bitlist_reversed(bit_writer_t *w, uint8_t *l, size_t len) 
     len -= 8*full_bytes;
 
     b = 0;
-    for (size_t i = 0; i < len; i++) {
+    for (ptrdiff_t i = 0; i < len; i++) {
         b |= *l;
         b <<= 1;
         l--;
@@ -175,7 +174,7 @@ uint8_t reverse_byte(uint8_t b) {
 
 static uint8_t reverse_table[256];
 
-void create_reverse_table() {
+void create_reverse_table(void) {
     for (uint16_t i = 0; i < 256; i++) {
         reverse_table[i] = reverse_byte(i);
     }

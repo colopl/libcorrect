@@ -24,12 +24,12 @@ void *init_rs_char(int symbol_size, int primitive_polynomial,
 
     shim->pad = pad;
     shim->block_length = 255 - pad;
-    shim->num_roots = number_roots;
-    shim->msg_length = shim->block_length - number_roots;
-    shim->rs = correct_reed_solomon_create(primitive_polynomial,
-                                           first_consecutive_root, root_gap, number_roots);
+    shim->num_roots = (unsigned int)number_roots;
+    shim->msg_length = shim->block_length - (unsigned int)number_roots;
+    shim->rs = correct_reed_solomon_create((uint16_t)primitive_polynomial,
+                                           (uint8_t)first_consecutive_root, (uint8_t)root_gap, (size_t)number_roots);
     shim->msg_out = malloc(shim->block_length);
-    shim->erasures = malloc(number_roots);
+    shim->erasures = malloc((size_t)number_roots);
 
     return shim;
 }
@@ -52,10 +52,10 @@ void decode_rs_char(void *rs, unsigned char *block, int *erasure_locations,
                     int num_erasures) {
     reed_solomon_shim *shim = (reed_solomon_shim *)rs;
     for (int i = 0; i < num_erasures; i++) {
-        shim->erasures[i] = (uint8_t)(erasure_locations[i]) - shim->pad;
+        shim->erasures[i] = (uint8_t)((uint8_t)erasure_locations[i] - shim->pad);
     }
     correct_reed_solomon_decode_with_erasures(shim->rs, block, shim->block_length,
-                                              shim->erasures, num_erasures,
+                                              shim->erasures, (size_t)num_erasures,
                                               block);
 }
 
@@ -118,14 +118,14 @@ static void update_viterbi_blk(void *vit, const unsigned char *encoded_soft,
     convolutional_shim *shim = (convolutional_shim *)vit;
 
     // don't overwrite our buffer
-    size_t rem = (shim->buf + shim->buf_len) - shim->write_iter;
+    size_t rem = (size_t)((shim->buf + shim->buf_len) - shim->write_iter);
     size_t rem_bits = 8 * rem;
     // this math isn't very clear
     // here we sort of do the opposite of what liquid-dsp does
     size_t n_write_bits = num_encoded_groups - (shim->order - 1);
     if (n_write_bits > rem_bits) {
         size_t reduction = n_write_bits - rem_bits;
-        num_encoded_groups -= reduction;
+        num_encoded_groups -= (unsigned int)reduction;
         n_write_bits -= reduction;
     }
 
@@ -143,11 +143,11 @@ static void chainback_viterbi(void *vit, unsigned char *decoded,
     // num_decoded_bits not a multiple of 8?
     // this is a similar problem to update_viterbi_blk
     // although here we could actually resolve a non-multiple of 8
-    size_t rem = shim->write_iter - shim->read_iter;
+    size_t rem = (size_t)(shim->write_iter - shim->read_iter);
     size_t rem_bits = 8 * rem;
 
     if (num_decoded_bits > rem_bits) {
-        num_decoded_bits = rem_bits;
+        num_decoded_bits = (unsigned int)rem_bits;
     }
 
     size_t num_decoded_bytes = (num_decoded_bits % 8)
@@ -160,7 +160,7 @@ static void chainback_viterbi(void *vit, unsigned char *decoded,
 
 /* Rate 1/2, k = 7 */
 void *create_viterbi27(int num_decoded_bits) {
-    return create_viterbi(num_decoded_bits, 2, 7, r12k7);
+    return create_viterbi((unsigned int)num_decoded_bits, 2, 7, r12k7);
 }
 
 void delete_viterbi27(void *vit) { delete_viterbi(vit); }
@@ -172,7 +172,7 @@ int init_viterbi27(void *vit, int _) {
 
 int update_viterbi27_blk(void *vit, unsigned char *encoded_soft,
                          int num_encoded_groups) {
-    update_viterbi_blk(vit, encoded_soft, num_encoded_groups);
+    update_viterbi_blk(vit, encoded_soft, (unsigned int)num_encoded_groups);
     return 0;
 }
 
@@ -184,7 +184,7 @@ int chainback_viterbi27(void *vit, unsigned char *decoded,
 
 /* Rate 1/2, k = 9 */
 void *create_viterbi29(int num_decoded_bits) {
-    return create_viterbi(num_decoded_bits, 2, 9, r12k9);
+    return create_viterbi((unsigned int)num_decoded_bits, 2, 9, r12k9);
 }
 
 void delete_viterbi29(void *vit) { delete_viterbi(vit); }
@@ -196,7 +196,7 @@ int init_viterbi29(void *vit, int _) {
 
 int update_viterbi29_blk(void *vit, unsigned char *encoded_soft,
                          int num_encoded_groups) {
-    update_viterbi_blk(vit, encoded_soft, num_encoded_groups);
+    update_viterbi_blk(vit, encoded_soft, (unsigned int)num_encoded_groups);
     return 0;
 }
 
@@ -208,7 +208,7 @@ int chainback_viterbi29(void *vit, unsigned char *decoded,
 
 /* Rate 1/3, k = 9 */
 void *create_viterbi39(int num_decoded_bits) {
-    return create_viterbi(num_decoded_bits, 3, 9, r13k9);
+    return create_viterbi((unsigned int)num_decoded_bits, 3, 9, r13k9);
 }
 
 void delete_viterbi39(void *vit) { delete_viterbi(vit); }
@@ -220,7 +220,7 @@ int init_viterbi39(void *vit, int _) {
 
 int update_viterbi39_blk(void *vit, unsigned char *encoded_soft,
                          int num_encoded_groups) {
-    update_viterbi_blk(vit, encoded_soft, num_encoded_groups);
+    update_viterbi_blk(vit, encoded_soft, (unsigned int)num_encoded_groups);
     return 0;
 }
 
@@ -232,7 +232,7 @@ int chainback_viterbi39(void *vit, unsigned char *decoded,
 
 /* Rate 1/6, k = 15 */
 void *create_viterbi615(int num_decoded_bits) {
-    return create_viterbi(num_decoded_bits, 6, 15, r16k15);
+    return create_viterbi((unsigned int)num_decoded_bits, 6, 15, r16k15);
 }
 
 void delete_viterbi615(void *vit) { delete_viterbi(vit); }
@@ -244,7 +244,7 @@ int init_viterbi615(void *vit, int _) {
 
 int update_viterbi615_blk(void *vit, unsigned char *encoded_soft,
                           int num_encoded_groups) {
-    update_viterbi_blk(vit, encoded_soft, num_encoded_groups);
+    update_viterbi_blk(vit, encoded_soft, (unsigned int)num_encoded_groups);
     return 0;
 }
 

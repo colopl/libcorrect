@@ -6,11 +6,11 @@ history_buffer *history_buffer_create(unsigned int min_traceback_length,
                                       shift_register_t highbit) {
     history_buffer *buf = calloc(1, sizeof(history_buffer));
 
-    *(unsigned int *)&buf->min_traceback_length = min_traceback_length;
-    *(unsigned int *)&buf->traceback_group_length = traceback_group_length;
-    *(unsigned int *)&buf->cap = min_traceback_length + traceback_group_length;
-    *(unsigned int *)&buf->num_states = num_states;
-    *(shift_register_t *)&buf->highbit = highbit;
+    buf->min_traceback_length = min_traceback_length;
+    buf->traceback_group_length = traceback_group_length;
+    buf->cap = min_traceback_length + traceback_group_length;
+    buf->num_states = num_states;
+    buf->highbit = highbit;
 
     buf->history = malloc(buf->cap * sizeof(uint8_t *));
     for (unsigned int i = 0; i < buf->cap; i++) {

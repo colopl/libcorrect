@@ -5,18 +5,18 @@
 // generates output bits after accumulating sufficient history
 typedef struct {
     // history entries must be at least this old to be decoded
-    const unsigned int min_traceback_length;
+    unsigned int min_traceback_length;
     // we'll decode entries in bursts. this tells us the length of the burst
-    const unsigned int traceback_group_length;
+    unsigned int traceback_group_length;
     // we will store a total of cap entries. equal to min_traceback_length +
     // traceback_group_length
-    const unsigned int cap;
+    unsigned int cap;
 
     // how many states in the shift register? this is one of the dimensions of
     // history table
-    const unsigned int num_states;
+    unsigned int num_states;
     // what's the high order bit of the shift register?
-    const shift_register_t highbit;
+    shift_register_t highbit;
 
     // history is a compact history representation for every shift register
     // state,

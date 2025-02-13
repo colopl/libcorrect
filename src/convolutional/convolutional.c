@@ -21,8 +21,8 @@ correct_convolutional *_correct_convolutional_init(correct_convolutional *conv,
     conv->numstates = 1 << order;
 
     unsigned int *table = malloc(sizeof(unsigned int) * (1 << order));
-    fill_table(conv->rate, conv->order, poly, table);
-    *(unsigned int **)&conv->table = table;
+    fill_table((unsigned int)conv->rate, (unsigned int)conv->order, poly, table);
+    conv->table = table;
 
     conv->bit_writer = bit_writer_create(NULL, 0);
     conv->bit_reader = bit_reader_create(NULL, 0);
@@ -42,7 +42,7 @@ correct_convolutional *correct_convolutional_create(size_t rate, size_t order,
 }
 
 void _correct_convolutional_teardown(correct_convolutional *conv) {
-    free(*(unsigned int **)&conv->table);
+    free(conv->table);
     bit_writer_destroy(conv->bit_writer);
     bit_reader_destroy(conv->bit_reader);
     if (conv->has_init_decode) {

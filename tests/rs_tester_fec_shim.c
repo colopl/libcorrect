@@ -15,9 +15,9 @@ void rs_fec_decode(void *decoder, uint8_t *encoded, size_t encoded_length,
     if (erasure_length) {
         int *locations = malloc(erasure_length * sizeof(int));
         for (size_t i = 0; i < erasure_length; i++) {
-            locations[i] = (unsigned int)(erasure_locations[i]) + pad_length;
+            locations[i] = (erasure_locations[i]) + (int)pad_length;
         }
-        decode_rs_char(decoder, encoded, locations, erasure_length);
+        decode_rs_char(decoder, encoded, locations, (int)erasure_length);
         free(locations);
     } else {
         decode_rs_char(decoder, encoded, NULL, 0);

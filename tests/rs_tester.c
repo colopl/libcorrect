@@ -1,8 +1,8 @@
 #include "rs_tester.h"
 
 void shuffle(int *a, size_t len) {
-    for (size_t i = 0; i < len - 2; i++) {
-        size_t j = rand() % (len - i) + i;
+    for (int i = 0; i < (int)len - 2; i++) {
+        size_t j = (size_t)(rand() % ((int)len - i) + i);
         int temp = a[i];
         a[i] = a[j];
         a[j] = temp;
@@ -63,7 +63,7 @@ rs_test_run test_rs_errors(rs_test *test, rs_testbench *testbench, size_t msg_le
     }
 
     for (size_t i = 0; i < msg_length; i++) {
-        testbench->msg[i] = rand() % 256;
+        testbench->msg[i] = (unsigned char)(rand() % 256);
     }
 
     size_t block_length = msg_length + testbench->min_distance;
@@ -73,7 +73,7 @@ rs_test_run test_rs_errors(rs_test *test, rs_testbench *testbench, size_t msg_le
 
     memcpy(testbench->corrupted_encoded, testbench->encoded, block_length);
 
-    for (int i = 0; i < block_length; i++) {
+    for (int i = 0; i < (int)block_length; i++) {
         testbench->indices[i] = i;
     }
 
@@ -81,14 +81,14 @@ rs_test_run test_rs_errors(rs_test *test, rs_testbench *testbench, size_t msg_le
 
     for (unsigned int i = 0; i < num_erasures; i++) {
         int index = testbench->indices[i];
-        uint8_t corruption_mask = (rand() % 255) + 1;
+        uint8_t corruption_mask = (uint8_t)((rand() % 255) + 1);
         testbench->corrupted_encoded[index] ^= corruption_mask;
-        testbench->erasure_locations[i] = index;
+        testbench->erasure_locations[i] = (uint8_t)index;
     }
 
     for (unsigned int i = 0; i < num_errors; i++) {
         int index = testbench->indices[i + num_erasures];
-        uint8_t corruption_mask = (rand() % 255) + 1;
+        uint8_t corruption_mask = (uint8_t)((rand() % 255) + 1);
         testbench->corrupted_encoded[index] ^= corruption_mask;
     }
 
