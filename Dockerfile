@@ -9,7 +9,7 @@ RUN if test -f "/etc/debian_version"; then \
                            "cmake" "make" "lcov"; \
     elif test -f "/etc/alpine-release"; then \
         apk add --no-cache "git" "openssh" "gcc" "g++" "clang" "cmake" \
-                               "make" "lcov"; \
+                           "make" "lcov"; \
     else \
         echo "Unsupported distribution" && exit 1; \
     fi
