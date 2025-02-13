@@ -1,28 +1,5 @@
 #include "correct/convolutional/convolutional.h"
 
-void conv_decode_print_iter(correct_convolutional *conv, unsigned int iter,
-                            unsigned int winner_index) {
-    if (iter < 2220) {
-        return;
-    }
-    printf("iteration: %d\n", iter);
-    distance_t *errors = conv->errors->write_errors;
-    printf("errors:\n");
-    for (shift_register_t i = 0; i < conv->numstates / 2; i++) {
-        printf("%2d: %d\n", i, errors[i]);
-    }
-    printf("\n");
-    printf("history:\n");
-    for (shift_register_t i = 0; i < conv->numstates / 2; i++) {
-        printf("%2d: ", i);
-        for (unsigned int j = 0; j <= winner_index; j++) {
-            printf("%d", conv->history_buffer->history[j][i] ? 1 : 0);
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
 void convolutional_decode_warmup(correct_convolutional *conv, unsigned int sets,
                                  const uint8_t *soft) {
     // first phase: load shiftregister up from 0 (order goes from 1 to conv->order)
