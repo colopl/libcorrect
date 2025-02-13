@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "correct/util/error-sim.h"
 
 size_t distance(uint8_t *a, uint8_t *b, size_t len) {
@@ -168,7 +170,7 @@ size_t test_conv_noise(conv_testbench *scratch, uint8_t *msg, size_t n_bytes,
     ssize_t decode_len = scratch->decode(scratch->decoder, scratch->soft, scratch->enclen, scratch->msg_out);
 
     if ((size_t)decode_len != n_bytes) {
-        printf("expected to decode %zu bytes, decoded %ld bytes instead\n", n_bytes, decode_len);
+        printf("expected to decode %" PRIdMAX " bytes, decoded %" PRIdMAX " bytes instead\n", (intmax_t)n_bytes, (intmax_t)decode_len);
         exit(1);
     }
 
