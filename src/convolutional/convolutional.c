@@ -37,10 +37,12 @@ correct_convolutional *correct_convolutional_create(size_t rate, size_t order,
     if (!conv) {
         return NULL;
     }
+
     correct_convolutional *init_conv = _correct_convolutional_init(conv, rate, order, poly);
     if (!init_conv) {
         free(conv);
     }
+
     return init_conv;
 }
 

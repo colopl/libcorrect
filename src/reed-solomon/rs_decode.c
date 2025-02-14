@@ -269,28 +269,80 @@ static void reed_solomon_find_modified_syndromes(correct_reed_solomon *rs, field
 }
 
 void correct_reed_solomon_decoder_create(correct_reed_solomon *rs) {
-    rs->has_init_decode = true;
     rs->syndromes = calloc(rs->min_distance, sizeof(field_element_t));
+    if (!rs->syndromes) {
+        goto bailout;
+    }
+
     rs->modified_syndromes = calloc(2 * rs->min_distance, sizeof(field_element_t));
+    if (!rs->modified_syndromes) {
+        goto bailout;
+    }
+
     rs->received_polynomial = polynomial_create((unsigned int)(rs->block_length - 1));
+    if (!rs->received_polynomial) {
+        goto bailout;
+    }
+
     rs->error_locator = polynomial_create((unsigned int)rs->min_distance);
+    if (!rs->error_locator) {
+        goto bailout;
+    }
+
     rs->error_locator_log = polynomial_create((unsigned int)rs->min_distance);
+    if (!rs->error_locator_log) {
+        goto bailout;
+    }
+
     rs->erasure_locator = polynomial_create((unsigned int)rs->min_distance);
+    if (!rs->erasure_locator) {
+        goto bailout;
+    }
+
     rs->error_roots = calloc(2 * rs->min_distance, sizeof(field_element_t));
+    if (!rs->error_roots) {
+        goto bailout;
+    }
+
     rs->error_vals = malloc(rs->min_distance * sizeof(field_element_t));
+    if (!rs->error_vals) {
+        goto bailout;
+    }
+
     rs->error_locations = malloc(rs->min_distance * sizeof(field_logarithm_t));
+    if (!rs->error_locations) {
+        goto bailout;
+    }
+
 
     rs->last_error_locator = polynomial_create((unsigned int)rs->min_distance);
+    if (!rs->last_error_locator) {
+        goto bailout;
+    }
+
     rs->error_evaluator = polynomial_create((unsigned int)(rs->min_distance - 1));
+    if (!rs->error_evaluator) {
+        goto bailout;
+    }
+
     rs->error_locator_derivative = polynomial_create((unsigned int)(rs->min_distance - 1));
+    if (!rs->error_locator_derivative) {
+        goto bailout;
+    }
 
     // calculate and store the first block_length powers of every generator root
     // we would have to do this work in order to calculate the syndromes
     // if we save it, we can prevent the need to recalculate it on subsequent calls
     // total memory usage is min_distance * block_length bytes e.g. 32 * 255 ~= 8k
     rs->generator_root_exp = malloc(rs->min_distance * sizeof(field_logarithm_t *));
+    if (!rs->generator_root_exp) {
+        goto bailout;
+    }
     for (unsigned int i = 0; i < rs->min_distance; i++) {
         rs->generator_root_exp[i] = malloc(rs->block_length * sizeof(field_logarithm_t));
+        if (!rs->generator_root_exp[i]) {
+            goto bailout;
+        }
         polynomial_build_exp_lut(rs->field, rs->generator_roots[i], (unsigned int)(rs->block_length - 1), rs->generator_root_exp[i]);
     }
 
@@ -299,13 +351,34 @@ void correct_reed_solomon_decoder_create(correct_reed_solomon *rs) {
     // for min_distance = 32 this is 8k of memory, a pittance for the speedup we receive in exchange
     // we also get to reuse this work during error value calculation
     rs->element_exp = malloc(256 * sizeof(field_logarithm_t *));
+    if (!rs->element_exp) {
+        goto bailout;
+    }
     for (field_operation_t i = 0; i < 256; i++) {
         rs->element_exp[i] = malloc(rs->min_distance * sizeof(field_logarithm_t));
+        if (!rs->element_exp[i]) {
+            goto bailout;
+        }
         polynomial_build_exp_lut(rs->field, (field_element_t)i, (unsigned int)(rs->min_distance - 1), rs->element_exp[i]);
     }
 
     rs->init_from_roots_scratch[0] = polynomial_create((unsigned int)rs->min_distance);
+    if (!rs->init_from_roots_scratch[0]) {
+        goto bailout;
+    }
+
     rs->init_from_roots_scratch[1] = polynomial_create((unsigned int)rs->min_distance);
+    if (!rs->init_from_roots_scratch[1]) {
+        goto bailout;
+    }
+
+    rs->has_init_decode = true;
+
+    return;
+
+    bailout:
+        correct_reed_solomon_destroy(rs);
+        return;
 }
 
 /* 
