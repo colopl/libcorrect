@@ -75,15 +75,9 @@ void *search_exhaustive_thread(void *vargs) {
     pthread_exit(NULL);
 }
 
-void search_exhaustive(size_t rate, size_t order,
-                       size_t n_bytes, uint8_t *msg,
-                       conv_testbench **scratches, size_t num_scratches,
-                       float *weights,
-                       conv_result_t *items,
-                       size_t items_len, double bpsk_voltage) {
-
-    exhaustive_thread_args *args = malloc(num_scratches * sizeof(exhaustive_thread_args));
-    pthread_t *threads = malloc(num_scratches * sizeof(pthread_t));
+void search_exhaustive(size_t rate, size_t order, size_t n_bytes, uint8_t *msg, conv_testbench **scratches, size_t num_scratches, float *weights, conv_result_t *items, size_t items_len, double bpsk_voltage) {
+    exhaustive_thread_args *args = (exhaustive_thread_args *)malloc(num_scratches * sizeof(exhaustive_thread_args));
+    pthread_t *threads = (pthread_t *)malloc(num_scratches * sizeof(pthread_t));
 
     for (size_t i = 0; i < num_scratches; i++) {
         args[i].rate = rate;
@@ -110,8 +104,7 @@ void search_exhaustive(size_t rate, size_t order,
 
 }
 
-void search_exhaustive_init(conv_result_t *items, size_t items_len,
-                            size_t num_scratches) {
+void search_exhaustive_init(conv_result_t *items, size_t items_len, size_t num_scratches) {
     for (size_t i = 0; i < items_len; i++) {
         for (size_t j = 0; j < num_scratches; j++) {
             items[i].distances[j] = 0;
@@ -119,8 +112,7 @@ void search_exhaustive_init(conv_result_t *items, size_t items_len,
     }
 }
 
-void search_exhaustive_fin(conv_result_t *items, size_t items_len,
-                           float *weights, size_t weights_len) {
+void search_exhaustive_fin(conv_result_t *items, size_t items_len, float *weights, size_t weights_len) {
     for (size_t i = 0; i < items_len; i++) {
         items[i].cost = 0;
         for (size_t j = 0; j < weights_len; j++) {
@@ -134,14 +126,8 @@ void search_exhaustive_fin(conv_result_t *items, size_t items_len,
 const size_t max_block_len = 16384;
 const size_t max_msg_len = 50000000;
 
-void test(size_t rate, size_t order,
-          conv_tester_t start, conv_testbench **scratches,
-          size_t num_scratches, float *weights,
-          size_t n_bytes, double *eb_n0,
-          double bpsk_bit_energy, size_t n_iter,
-          double bpsk_voltage) {
-
-    uint8_t *msg = malloc(max_block_len * sizeof(uint8_t));
+void test(size_t rate, size_t order, conv_tester_t start, conv_testbench **scratches, size_t num_scratches, float *weights, size_t n_bytes, double *eb_n0, double bpsk_bit_energy, size_t n_iter, double bpsk_voltage) {
+    uint8_t *msg = (uint8_t *)malloc(max_block_len * sizeof(uint8_t));
 
     correct_convolutional_polynomial_t maxcoeff = (1 << order) - 1;
     correct_convolutional_polynomial_t startcoeff = (1 << (order - 1)) + 1;
@@ -151,8 +137,8 @@ void test(size_t rate, size_t order,
         convs_len *= num_polys;
     }
 
-    conv_result_t *exhaustive = malloc(convs_len * sizeof(conv_result_t));
-    correct_convolutional_polynomial_t *iter_poly = malloc(rate * sizeof(correct_convolutional_polynomial_t));
+    conv_result_t *exhaustive = (conv_result_t *)malloc(convs_len * sizeof(conv_result_t));
+    correct_convolutional_polynomial_t *iter_poly = (correct_convolutional_polynomial_t *)malloc(rate * sizeof(correct_convolutional_polynomial_t));
 
     for (size_t i = 0; i < rate; i++) {
         iter_poly[i] = startcoeff;
@@ -160,8 +146,8 @@ void test(size_t rate, size_t order,
 
     // init exhaustive with all polys
     for (size_t i = 0; i < convs_len; i++) {
-        exhaustive[i].poly = malloc(rate * sizeof(correct_convolutional_polynomial_t));
-        exhaustive[i].distances = calloc(num_scratches, sizeof(int));
+        exhaustive[i].poly = (correct_convolutional_polynomial_t *)malloc(rate * sizeof(correct_convolutional_polynomial_t));
+        exhaustive[i].distances = (int *)calloc(num_scratches, sizeof(int));
         exhaustive[i].cost = 0;
         memcpy(exhaustive[i].poly, iter_poly, rate * sizeof(correct_convolutional_polynomial_t));
         // this next loop adds 2 with "carry"
@@ -201,9 +187,7 @@ void test(size_t rate, size_t order,
                 build_white_noise(scratches[i]->noise, scratches[i]->enclen, eb_n0[i], bpsk_bit_energy);
             }
 
-            search_exhaustive(rate, order,
-                              block_len, msg, scratches, num_scratches, weights,
-                              exhaustive, convs_len, bpsk_voltage);
+            search_exhaustive(rate, order, block_len, msg, scratches, num_scratches, weights, exhaustive, convs_len, bpsk_voltage);
         }
 
         // call fin(), which calculates a cost metric for all of the distances
@@ -256,6 +240,7 @@ void test(size_t rate, size_t order,
         free(exhaustive[i].poly);
         free(exhaustive[i].distances);
     }
+
     free(exhaustive);
     free(msg);
 }
@@ -281,7 +266,7 @@ int main(int argc, char **argv) {
 
     conv_tester_t start;
 
-    start.poly = malloc(rate * sizeof(correct_convolutional_polynomial_t));
+    start.poly = (correct_convolutional_polynomial_t *)malloc(rate * sizeof(correct_convolutional_polynomial_t));
 
     for (size_t i = 0; i < rate; i++) {
         start.poly[i] = ((maxcoeff - startcoeff) / 2) + startcoeff + 1;
@@ -291,7 +276,7 @@ int main(int argc, char **argv) {
 
     size_t num_scratches = 4;
     float *weights;
-    conv_testbench **scratches = malloc(num_scratches * sizeof(conv_testbench *));
+    conv_testbench **scratches = (conv_testbench **)malloc(num_scratches * sizeof(conv_testbench *));
     double *eb_n0;
 
     for (size_t i = 0; i < num_scratches; i++) {
@@ -321,9 +306,11 @@ int main(int argc, char **argv) {
 
     free(start.poly);
     conv_destroy(start.conv);
+
     for (size_t i = 0; i < num_scratches; i++) {
         free_scratch(scratches[i]);
     }
+
     free(scratches);
 
     return 0;

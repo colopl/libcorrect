@@ -110,14 +110,15 @@ void correct_reed_solomon_destroy(correct_reed_solomon *rs) {
 }
 
 correct_reed_solomon *correct_reed_solomon_create(field_operation_t primitive_polynomial, field_logarithm_t first_consecutive_root, field_logarithm_t generator_root_gap, size_t num_roots) {
-    correct_reed_solomon *rs = calloc(1, sizeof(correct_reed_solomon));
+    correct_reed_solomon *rs = (correct_reed_solomon *)calloc(1, sizeof(correct_reed_solomon));
     if (!rs) {
         return NULL;
     }
 
     rs->field = field_create(primitive_polynomial);
     if (!rs->field) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return NULL;
     }
 
     rs->block_length = 255;
@@ -127,30 +128,30 @@ correct_reed_solomon *correct_reed_solomon_create(field_operation_t primitive_po
     rs->first_consecutive_root = first_consecutive_root;
     rs->generator_root_gap = generator_root_gap;
 
-    rs->generator_roots = malloc(rs->min_distance * sizeof(field_element_t));
+    rs->generator_roots = (field_element_t *)malloc(rs->min_distance * sizeof(field_element_t));
     if (!rs->generator_roots) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return NULL;
     }
 
     rs->generator = reed_solomon_build_generator(rs->field, (unsigned int)rs->min_distance, rs->first_consecutive_root, rs->generator_root_gap, rs->generator_roots);
     if (!rs->generator) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return NULL;
     }
 
     rs->encoded_polynomial = polynomial_create((unsigned int)(rs->block_length - 1));
     if (!rs->encoded_polynomial) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return NULL;
     }
     rs->encoded_remainder = polynomial_create((unsigned int)(rs->block_length - 1));
     if (!rs->encoded_remainder) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return NULL;
     }
 
     rs->has_init_decode = false;
 
     return rs;
-
-    bailout:
-        correct_reed_solomon_destroy(rs);
-        return NULL;
 }

@@ -11,11 +11,8 @@ uint32_t retry_count = 5;
 
 size_t max_block_len = 4096;
 
-size_t test_conv(correct_convolutional *conv, void *fec,
-                 ssize_t (*decode)(void *, uint8_t *, size_t, uint8_t *),
-                 conv_testbench **testbench_ptr, size_t msg_len, double eb_n0,
-                 double bpsk_bit_energy, double bpsk_voltage) {
-    uint8_t *msg = malloc(max_block_len);
+size_t test_conv(correct_convolutional *conv, void *fec, ssize_t (*decode)(void *, uint8_t *, size_t, uint8_t *), conv_testbench **testbench_ptr, size_t msg_len, double eb_n0, double bpsk_bit_energy, double bpsk_voltage) {
+    uint8_t *msg = (uint8_t *)malloc(max_block_len);
 
     size_t num_errors = 0;
 
@@ -27,8 +24,7 @@ size_t test_conv(correct_convolutional *conv, void *fec,
             msg[j] = rand() % 256;
         }
 
-        *testbench_ptr =
-            resize_conv_testbench(*testbench_ptr, conv_correct_enclen, conv, block_len);
+        *testbench_ptr = resize_conv_testbench(*testbench_ptr, conv_correct_enclen, conv, block_len);
         conv_testbench *testbench = *testbench_ptr;
         testbench->encoder = conv;
         testbench->encode = conv_correct_encode;
@@ -37,14 +33,13 @@ size_t test_conv(correct_convolutional *conv, void *fec,
         build_white_noise(testbench->noise, testbench->enclen, eb_n0, bpsk_bit_energy);
         num_errors += test_conv_noise(testbench, msg, block_len, bpsk_voltage);
     }
+
     free(msg);
+
     return num_errors;
 }
 
-void assert_test_result(correct_convolutional *conv, void *fec,
-                        ssize_t (*decode)(void *, uint8_t *, size_t, uint8_t *),
-                        conv_testbench **testbench, size_t test_length, size_t rate, size_t order,
-                        double eb_n0, double error_rate, uint32_t retries) {
+void assert_test_result(correct_convolutional *conv, void *fec, ssize_t (*decode)(void *, uint8_t *, size_t, uint8_t *), conv_testbench **testbench, size_t test_length, size_t rate, size_t order, double eb_n0, double error_rate, uint32_t retries) {
     double bpsk_voltage = 1.0 / sqrt(2.0);
     double bpsk_sym_energy = 2 * pow(bpsk_voltage, 2.0);
     double bpsk_bit_energy = bpsk_sym_energy * rate;
@@ -52,19 +47,21 @@ void assert_test_result(correct_convolutional *conv, void *fec,
     double observed_error_rate = 0.f;
 
     for (uint32_t i = 0; i < retries; i++) {
-        size_t error_count =
-            test_conv(conv, fec, decode, testbench, test_length, eb_n0, bpsk_bit_energy, bpsk_voltage);
+        size_t error_count = test_conv(conv, fec, decode, testbench, test_length, eb_n0, bpsk_bit_energy, bpsk_voltage);
         observed_error_rate = error_count / ((double)test_length * 8);
         if (observed_error_rate <= error_rate) {
             printf("test passed, expected error rate=%.2e, observed error rate=%.2e @%.1fdB for rate %zu order %zu\n",
                    error_rate, observed_error_rate, eb_n0, rate, order);
+
             return;
         }
+
         printf("Retry %d/%d: observed error rate=%.2e\n", i + 1, retries, observed_error_rate);
     }
     
     printf("test failed, expected error rate=%.2e, observed error rate=%.2e @%.1fdB for rate %zu order %zu\n",
            error_rate, observed_error_rate, eb_n0, rate, order);
+
     exit(1);
 }
 

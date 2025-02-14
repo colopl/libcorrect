@@ -2,14 +2,13 @@
 
 // https://www.youtube.com/watch?v=b3_lVSrPB6w
 
-correct_convolutional *_correct_convolutional_init(correct_convolutional *conv,
-                                                   size_t rate, size_t order,
-                                                   const polynomial_t *poly) {
+correct_convolutional *_correct_convolutional_init(correct_convolutional *conv, size_t rate, size_t order, const polynomial_t *poly) {
     if (order >= 8 * sizeof(shift_register_t)) {
         // XXX turn this into an error code
         // printf("order must be smaller than 8 * sizeof(shift_register_t)\n");
         return NULL;
     }
+
     if (rate < 2) {
         // XXX turn this into an error code
         // printf("rate must be 2 or greater\n");
@@ -20,7 +19,7 @@ correct_convolutional *_correct_convolutional_init(correct_convolutional *conv,
     conv->rate = rate;
     conv->numstates = 1ULL << order;
 
-    unsigned int *table = malloc(sizeof(unsigned int) * (1ULL << order));
+    unsigned int *table = (unsigned int *)malloc(sizeof(unsigned int) * (1ULL << order));
     fill_table((unsigned int)conv->rate, (unsigned int)conv->order, poly, table);
     conv->table = table;
 
@@ -31,9 +30,8 @@ correct_convolutional *_correct_convolutional_init(correct_convolutional *conv,
     return conv;
 }
 
-correct_convolutional *correct_convolutional_create(size_t rate, size_t order,
-                                                    const polynomial_t *poly) {
-    correct_convolutional *conv = malloc(sizeof(correct_convolutional));
+correct_convolutional *correct_convolutional_create(size_t rate, size_t order, const polynomial_t *poly) {
+    correct_convolutional *conv = (correct_convolutional *)malloc(sizeof(correct_convolutional));
     if (!conv) {
         return NULL;
     }

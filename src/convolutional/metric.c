@@ -28,5 +28,6 @@ distance_t metric_soft_distance_quadratic(unsigned int hard_x, const uint8_t *so
         
         dist += (distance_t)squared;
     }
+
     return dist;
 }

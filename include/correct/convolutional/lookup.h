@@ -16,13 +16,8 @@ typedef struct {
     distance_pair_t *distances;
 } pair_lookup_t;
 
-void fill_table(unsigned int order,
-                unsigned int rate,
-                const polynomial_t *poly,
-                unsigned int *table);
-pair_lookup_t *pair_lookup_create(unsigned int rate,
-                                 unsigned int order,
-                                 const unsigned int *table);
+void fill_table(unsigned int order, unsigned int rate, const polynomial_t *poly, unsigned int *table);
+pair_lookup_t *pair_lookup_create(unsigned int rate, unsigned int order, const unsigned int *table);
 void pair_lookup_destroy(pair_lookup_t *pairs);
 void pair_lookup_fill_distance(pair_lookup_t *pairs, distance_t *distances);
 

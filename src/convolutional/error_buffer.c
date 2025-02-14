@@ -1,7 +1,7 @@
 #include "correct/convolutional/error_buffer.h"
 
 error_buffer_t *error_buffer_create(unsigned int num_states) {
-    error_buffer_t *buf = calloc(1, sizeof(error_buffer_t));
+    error_buffer_t *buf = (error_buffer_t *)calloc(1, sizeof(error_buffer_t));
 
     // how large are the error buffers?
     buf->num_states = num_states;
@@ -10,8 +10,8 @@ error_buffer_t *error_buffer_create(unsigned int num_states) {
     // (double buffer)
     // the error metric is the aggregated number of bit errors found
     //   at a given path which terminates at a particular shift register state
-    buf->errors[0] = calloc(sizeof(distance_t), num_states);
-    buf->errors[1] = calloc(sizeof(distance_t), num_states);
+    buf->errors[0] = (distance_t *)calloc(num_states, sizeof(distance_t));
+    buf->errors[1] = (distance_t *)calloc(num_states, sizeof(distance_t));
 
     // which buffer are we using, 0 or 1?
     buf->index = 0;

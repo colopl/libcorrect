@@ -17,8 +17,7 @@ static inline bool is_valid_buffer_access(size_t index, size_t buffer_size) {
 //   these syndromes are all zero, then we can conclude the error polynomial is also
 //   zero. if they're nonzero, then we know our message received an error in transit.
 // returns true if syndromes are all zero
-static bool reed_solomon_find_syndromes(field_t *field, polynomial_t *msgpoly, field_logarithm_t **generator_root_exp,
-                                        field_element_t *syndromes, size_t min_distance) {
+static bool reed_solomon_find_syndromes(field_t *field, polynomial_t *msgpoly, field_logarithm_t **generator_root_exp, field_element_t *syndromes, size_t min_distance) {
     bool all_zero = true;
     memset(syndromes, 0, min_distance * sizeof(field_element_t));
     for (unsigned int i = 0; i < min_distance; i++) {
@@ -122,13 +121,13 @@ static unsigned int reed_solomon_find_error_locator(correct_reed_solomon *rs, si
                                       : rs->error_locator->order;
         delay_length++;
     }
+
     return rs->error_locator->order;
 }
 
 // find the roots of the error locator polynomial
 // Chien search
-bool reed_solomon_factorize_error_locator(field_t *field, unsigned int num_skip, polynomial_t *locator_log, field_element_t *roots,
-                                          field_logarithm_t **element_exp) {
+bool reed_solomon_factorize_error_locator(field_t *field, unsigned int num_skip, polynomial_t *locator_log, field_element_t *roots, field_logarithm_t **element_exp) {
     // normally it'd be tricky to find all the roots
     // but, the finite field is awfully finite...
     // just brute force search across every field element
@@ -146,6 +145,7 @@ bool reed_solomon_factorize_error_locator(field_t *field, unsigned int num_skip,
             root++;
         }
     }
+
     // this is where we find out if we are have too many errors to recover from
     // berlekamp-massey may have built an error locator that has 0 discrepancy
     // on the syndromes but doesn't have enough roots
@@ -153,8 +153,7 @@ bool reed_solomon_factorize_error_locator(field_t *field, unsigned int num_skip,
 }
 
 // use error locator and syndromes to find the error evaluator polynomial
-void reed_solomon_find_error_evaluator(field_t *field, polynomial_t *locator, polynomial_t *syndromes,
-                                       polynomial_t *error_evaluator) {
+void reed_solomon_find_error_evaluator(field_t *field, polynomial_t *locator, polynomial_t *syndromes, polynomial_t *error_evaluator) {
     // the error evaluator, omega(x), is S(x)*Lamba(x) mod x^(2t)
     // where S(x) is a polynomial constructed from the syndromes
     //   S(1) + S(2)*x + ... + S(2t)*x(2t - 1)
@@ -195,6 +194,7 @@ void reed_solomon_find_error_values(correct_reed_solomon *rs) {
         if (rs->error_roots[i] == 0) {
             continue;
         }
+
         rs->error_vals[i] = field_mul(
             rs->field, field_pow(rs->field, rs->error_roots[i], rs->first_consecutive_root - 1),
             field_div(
@@ -206,9 +206,7 @@ void reed_solomon_find_error_values(correct_reed_solomon *rs) {
 /* Finds error locations from error roots
  * num_skip: Number of roots to skip (used for erasure decoding)
  */
-void reed_solomon_find_error_locations(field_t *field, field_logarithm_t generator_root_gap,
-                                        field_element_t *error_roots, field_logarithm_t *error_locations,
-                                        unsigned int num_errors, unsigned int num_skip) {
+void reed_solomon_find_error_locations(field_t *field, field_logarithm_t generator_root_gap, field_element_t *error_roots, field_logarithm_t *error_locations, unsigned int num_errors, unsigned int num_skip) {
     // Skip the first num_skip roots (used for erasure decoding)
     for (unsigned int i = num_skip; i < num_errors; i++) {
         // the error roots are the reciprocals of the error locations, so div 1 by them
@@ -235,9 +233,7 @@ void reed_solomon_find_error_locations(field_t *field, field_logarithm_t generat
 
 // erasure method -- take given locations and convert to roots
 // this is the inverse of reed_solomon_find_error_locations
-static void reed_solomon_find_error_roots_from_locations(field_t *field, field_logarithm_t generator_root_gap,
-                                                         const field_logarithm_t *error_locations,
-                                                         field_element_t *error_roots, unsigned int num_errors) {
+static void reed_solomon_find_error_roots_from_locations(field_t *field, field_logarithm_t generator_root_gap, const field_logarithm_t *error_locations, field_element_t *error_roots, unsigned int num_errors) {
     for (unsigned int i = 0; i < num_errors; i++) {
         field_element_t loc = field_pow(field, field->exp[error_locations[i]], generator_root_gap);
         // field_element_t loc = field.exp[error_locations[i]];
@@ -247,10 +243,7 @@ static void reed_solomon_find_error_roots_from_locations(field_t *field, field_l
 }
 
 // erasure method -- given the roots of the error locator, create the polynomial
-static polynomial_t *reed_solomon_find_error_locator_from_roots(field_t *field, unsigned int num_errors,
-                                                               field_element_t *error_roots,
-                                                               polynomial_t *error_locator,
-                                                               polynomial_t **scratch) {
+static polynomial_t *reed_solomon_find_error_locator_from_roots(field_t *field, unsigned int num_errors, field_element_t *error_roots, polynomial_t *error_locator, polynomial_t **scratch) {
     // multiply out roots to build the error locator polynomial
     return polynomial_init_from_roots(field, num_errors, error_roots, error_locator, scratch);
 }
@@ -268,81 +261,102 @@ static void reed_solomon_find_modified_syndromes(correct_reed_solomon *rs, field
     polynomial_mul(rs->field, error_locator, &syndrome_poly, &modified_syndrome_poly);
 }
 
-void correct_reed_solomon_decoder_create(correct_reed_solomon *rs) {
+static inline void correct_reed_solomon_decoder_create(correct_reed_solomon *rs) {
+    if (!rs) {
+        return;
+    }
+
     rs->syndromes = calloc(rs->min_distance, sizeof(field_element_t));
     if (!rs->syndromes) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->modified_syndromes = calloc(2 * rs->min_distance, sizeof(field_element_t));
     if (!rs->modified_syndromes) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->received_polynomial = polynomial_create((unsigned int)(rs->block_length - 1));
     if (!rs->received_polynomial) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->error_locator = polynomial_create((unsigned int)rs->min_distance);
     if (!rs->error_locator) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->error_locator_log = polynomial_create((unsigned int)rs->min_distance);
     if (!rs->error_locator_log) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->erasure_locator = polynomial_create((unsigned int)rs->min_distance);
     if (!rs->erasure_locator) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->error_roots = calloc(2 * rs->min_distance, sizeof(field_element_t));
     if (!rs->error_roots) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
-    rs->error_vals = malloc(rs->min_distance * sizeof(field_element_t));
+    rs->error_vals = (field_element_t *)malloc(rs->min_distance * sizeof(field_element_t));
     if (!rs->error_vals) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
-    rs->error_locations = malloc(rs->min_distance * sizeof(field_logarithm_t));
+    rs->error_locations = (field_logarithm_t *)malloc(rs->min_distance * sizeof(field_logarithm_t));
     if (!rs->error_locations) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
 
     rs->last_error_locator = polynomial_create((unsigned int)rs->min_distance);
     if (!rs->last_error_locator) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->error_evaluator = polynomial_create((unsigned int)(rs->min_distance - 1));
     if (!rs->error_evaluator) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->error_locator_derivative = polynomial_create((unsigned int)(rs->min_distance - 1));
     if (!rs->error_locator_derivative) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     // calculate and store the first block_length powers of every generator root
     // we would have to do this work in order to calculate the syndromes
     // if we save it, we can prevent the need to recalculate it on subsequent calls
     // total memory usage is min_distance * block_length bytes e.g. 32 * 255 ~= 8k
-    rs->generator_root_exp = malloc(rs->min_distance * sizeof(field_logarithm_t *));
+    rs->generator_root_exp = (field_logarithm_t **)malloc(rs->min_distance * sizeof(field_logarithm_t *));
     if (!rs->generator_root_exp) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
+
     for (unsigned int i = 0; i < rs->min_distance; i++) {
-        rs->generator_root_exp[i] = malloc(rs->block_length * sizeof(field_logarithm_t));
+        rs->generator_root_exp[i] = (field_logarithm_t *)malloc(rs->block_length * sizeof(field_logarithm_t));
+    
         if (!rs->generator_root_exp[i]) {
-            goto bailout;
+            correct_reed_solomon_destroy(rs);
+            return;
         }
+    
         polynomial_build_exp_lut(rs->field, rs->generator_roots[i], (unsigned int)(rs->block_length - 1), rs->generator_root_exp[i]);
     }
 
@@ -350,35 +364,37 @@ void correct_reed_solomon_decoder_create(correct_reed_solomon *rs) {
     // we would have to do this for chien search anyway, and its size is only 256 * min_distance bytes
     // for min_distance = 32 this is 8k of memory, a pittance for the speedup we receive in exchange
     // we also get to reuse this work during error value calculation
-    rs->element_exp = malloc(256 * sizeof(field_logarithm_t *));
+    rs->element_exp = (field_logarithm_t **)malloc(256 * sizeof(field_logarithm_t *));
     if (!rs->element_exp) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
+
     for (field_operation_t i = 0; i < 256; i++) {
-        rs->element_exp[i] = malloc(rs->min_distance * sizeof(field_logarithm_t));
+        rs->element_exp[i] = (field_logarithm_t *)malloc(rs->min_distance * sizeof(field_logarithm_t));
         if (!rs->element_exp[i]) {
-            goto bailout;
+            correct_reed_solomon_destroy(rs);
+            return;
         }
+
         polynomial_build_exp_lut(rs->field, (field_element_t)i, (unsigned int)(rs->min_distance - 1), rs->element_exp[i]);
     }
 
     rs->init_from_roots_scratch[0] = polynomial_create((unsigned int)rs->min_distance);
     if (!rs->init_from_roots_scratch[0]) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->init_from_roots_scratch[1] = polynomial_create((unsigned int)rs->min_distance);
     if (!rs->init_from_roots_scratch[1]) {
-        goto bailout;
+        correct_reed_solomon_destroy(rs);
+        return;
     }
 
     rs->has_init_decode = true;
 
     return;
-
-    bailout:
-        correct_reed_solomon_destroy(rs);
-        return;
 }
 
 /* 
@@ -387,14 +403,8 @@ void correct_reed_solomon_decoder_create(correct_reed_solomon *rs) {
  *  -1: Decoding failure
  *  -2: Invalid input length
  */
-ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *encoded, size_t encoded_length,
-                                    uint8_t *msg) {
-    if (!rs ||
-        !encoded ||
-        !msg ||
-        encoded_length > rs->block_length ||
-        !is_valid_alloc_size(encoded_length * sizeof(uint8_t))
-    ) {
+ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *encoded, size_t encoded_length, uint8_t *msg) {
+    if (!rs || !encoded || !msg || encoded_length > rs->block_length || !is_valid_alloc_size(encoded_length * sizeof(uint8_t))) {
         return -2;
     }
 
@@ -476,9 +486,7 @@ ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *enc
     return (ssize_t)num_errors;  // Return the number of errors that were corrected
 }
 
-ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, const uint8_t *encoded,
-                                                  size_t encoded_length, const uint8_t *erasure_locations,
-                                                  size_t erasure_length, uint8_t *msg) {
+ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, const uint8_t *encoded, size_t encoded_length, const uint8_t *erasure_locations, size_t erasure_length, uint8_t *msg) {
     if (!erasure_length) {
         return correct_reed_solomon_decode(rs, encoded, encoded_length, msg);
     }
@@ -522,11 +530,9 @@ ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, cons
         rs->error_locations[i] = (field_logarithm_t)(rs->block_length - (erasure_locations[i] + pad_length + 1));
     }
 
-    reed_solomon_find_error_roots_from_locations(rs->field, rs->generator_root_gap, rs->error_locations,
-                                                 rs->error_roots, (unsigned int)erasure_length);
+    reed_solomon_find_error_roots_from_locations(rs->field, rs->generator_root_gap, rs->error_locations, rs->error_roots, (unsigned int)erasure_length);
 
-    rs->erasure_locator =
-        reed_solomon_find_error_locator_from_roots(rs->field, (unsigned int)erasure_length, rs->error_roots, rs->erasure_locator, rs->init_from_roots_scratch);
+    rs->erasure_locator = reed_solomon_find_error_locator_from_roots(rs->field, (unsigned int)erasure_length, rs->error_roots, rs->erasure_locator, rs->init_from_roots_scratch);
 
     bool all_zero = reed_solomon_find_syndromes(rs->field, rs->received_polynomial, rs->generator_root_exp,
                                                 rs->syndromes, rs->min_distance);
@@ -537,12 +543,13 @@ ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, cons
         for (unsigned int i = 0; i < msg_length; i++) {
             msg[i] = rs->received_polynomial->coeff[encoded_length - (i + 1)];
         }
+
         return msg_length;
     }
 
     reed_solomon_find_modified_syndromes(rs, rs->syndromes, rs->erasure_locator, rs->modified_syndromes);
 
-    field_element_t *syndrome_copy = malloc(rs->min_distance * sizeof(field_element_t));
+    field_element_t *syndrome_copy = (field_element_t *)malloc(rs->min_distance * sizeof(field_element_t));
     if (!syndrome_copy) {
         return -1;
     }

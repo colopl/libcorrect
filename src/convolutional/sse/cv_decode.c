@@ -1,7 +1,6 @@
 #include "correct/convolutional/sse/convolutional.h"
 
-static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, unsigned int sets,
-                                           const uint8_t *soft) {
+static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, unsigned int sets, const uint8_t *soft) {
     correct_convolutional *conv = &sse_conv->base_conv;
     shift_register_t highbit = 1 << (conv->order - 1);
     unsigned int hist_buf_index = conv->history_buffer->index;
@@ -9,6 +8,7 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
     unsigned int hist_buf_len = conv->history_buffer->len;
     unsigned int hist_buf_rn_int = conv->history_buffer->renormalize_interval;
     unsigned int hist_buf_rn_cnt = conv->history_buffer->renormalize_counter;
+
     for (unsigned int i = conv->order - 1; i < (sets - conv->order + 1); i++) {
         distance_t *distances = conv->distances;
         // lasterrors are the aggregate bit errors for the states of
@@ -16,13 +16,11 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
         if (soft) {
             if (conv->soft_measurement == CORRECT_SOFT_LINEAR) {
                 for (unsigned int j = 0; j < 1 << (conv->rate); j++) {
-                    distances[j] =
-                        metric_soft_distance_linear(j, soft + i * conv->rate, conv->rate);
+                    distances[j] = metric_soft_distance_linear(j, soft + i * conv->rate, conv->rate);
                 }
             } else {
                 for (unsigned int j = 0; j < 1 << (conv->rate); j++) {
-                    distances[j] =
-                        metric_soft_distance_quadratic(j, soft + i * conv->rate, conv->rate);
+                    distances[j] = metric_soft_distance_quadratic(j, soft + i * conv->rate, conv->rate);
                 }
             }
         } else {
@@ -41,7 +39,7 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
         distance_t *write_errors = conv->errors->write_errors;
 
         uint8_t *history = conv->history_buffer->history[hist_buf_index];
-        ;
+
         // walk through all states, ignoring oldest bit
         // we will track a best register state (path) and the number of bit
         // errors at that path at this time slice
@@ -241,17 +239,16 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
             }
             hist_buf_rn_cnt++;
         }
+
         error_buffer_swap(conv->errors);
     }
+
     conv->history_buffer->len = hist_buf_len;
     conv->history_buffer->index = hist_buf_index;
     conv->history_buffer->renormalize_counter = hist_buf_rn_cnt;
 }
 
-static bool _convolutional_sse_decode_init(correct_convolutional_sse *conv,
-                                           unsigned int min_traceback,
-                                           unsigned int traceback_length,
-                                           unsigned int renormalize_interval) {
+static bool _convolutional_sse_decode_init(correct_convolutional_sse *conv, unsigned int min_traceback, unsigned int traceback_length, unsigned int renormalize_interval) {
     if (!_convolutional_decode_init(&conv->base_conv, min_traceback, traceback_length, renormalize_interval)) {
         return false;
     }
@@ -261,9 +258,7 @@ static bool _convolutional_sse_decode_init(correct_convolutional_sse *conv,
     return true;
 }
 
-static ssize_t _convolutional_sse_decode(correct_convolutional_sse *sse_conv,
-                                         size_t num_encoded_bits, size_t num_encoded_bytes,
-                                         uint8_t *msg, const soft_t *soft_encoded) {
+static ssize_t _convolutional_sse_decode(correct_convolutional_sse *sse_conv, size_t num_encoded_bits, size_t num_encoded_bytes, uint8_t *msg, const soft_t *soft_encoded) {
     correct_convolutional *conv = &sse_conv->base_conv;
     if (!conv->has_init_decode) {
         uint64_t max_error_per_input = conv->rate * soft_max;
@@ -293,8 +288,7 @@ static ssize_t _convolutional_sse_decode(correct_convolutional_sse *sse_conv,
     return bit_writer_length(conv->bit_writer);
 }
 
-ssize_t correct_convolutional_sse_decode(correct_convolutional_sse *conv, const uint8_t *encoded,
-                                         size_t num_encoded_bits, uint8_t *msg) {
+ssize_t correct_convolutional_sse_decode(correct_convolutional_sse *conv, const uint8_t *encoded, size_t num_encoded_bits, uint8_t *msg) {
     if (num_encoded_bits % conv->base_conv.rate) {
         // XXX turn this into an error code
         // printf("encoded length of message must be a multiple of rate\n");
@@ -308,8 +302,7 @@ ssize_t correct_convolutional_sse_decode(correct_convolutional_sse *conv, const 
     return _convolutional_sse_decode(conv, num_encoded_bits, num_encoded_bytes, msg, NULL);
 }
 
-ssize_t correct_convolutional_sse_decode_soft(correct_convolutional_sse *conv, const soft_t *encoded,
-                                              size_t num_encoded_bits, uint8_t *msg) {
+ssize_t correct_convolutional_sse_decode_soft(correct_convolutional_sse *conv, const soft_t *encoded, size_t num_encoded_bits, uint8_t *msg) {
     if (num_encoded_bits % conv->base_conv.rate) {
         // XXX turn this into an error code
         // printf("encoded length of message must be a multiple of rate\n");

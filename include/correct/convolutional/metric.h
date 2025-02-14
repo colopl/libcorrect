@@ -11,6 +11,7 @@ static inline distance_t metric_distance(unsigned int x, unsigned int y) {
 
 static inline distance_t metric_soft_distance_linear(unsigned int hard_x, const uint8_t *soft_y, size_t len) {
     distance_t dist = 0;
+
     for (size_t i = 0; i < len; i++) {
         uint8_t soft_x = (hard_x & 1) ? 0xff : 0;
         hard_x >>= 1;
@@ -29,6 +30,7 @@ static inline distance_t metric_soft_distance_linear(unsigned int hard_x, const 
             dist = (distance_t)new_dist;
         }
     }
+
     return dist;
 }
 

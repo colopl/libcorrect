@@ -35,17 +35,19 @@ oct_lookup_t *oct_lookup_create(unsigned int rate,
         return NULL;
     }
 
-    octs->keys = malloc((1 << (order - 3)) * sizeof(distance_oct_key_t));
+    octs->keys = (distance_oct_key_t *)malloc((1 << (order - 3)) * sizeof(distance_oct_key_t));
     if (!octs->keys) {
-        goto bailout;
+        oct_lookup_destroy(octs);
+        return NULL;
     }
 
-    octs->outputs = malloc(((output_oct_t)2 << rate) * sizeof(uint64_t));
+    octs->outputs = (output_oct_t *)malloc(((output_oct_t)2 << rate) * sizeof(uint64_t));
     if (!octs->outputs) {
-        goto bailout;
+        oct_lookup_destroy(octs);
+        return NULL;
     }
 
-    output_oct_t *short_outs = calloc(((output_oct_t)2 << rate), sizeof(output_oct_t));
+    output_oct_t *short_outs = (output_oct_t *)calloc(((output_oct_t)2 << rate), sizeof(output_oct_t));
     size_t outputs_len = 2 << rate;
     unsigned int output_counter = 1;
     // for every (even-numbered) shift register state, find the concatenated output of the state
@@ -94,12 +96,14 @@ oct_lookup_t *oct_lookup_create(unsigned int rate,
             if (output_counter == outputs_len) {
                 octs->outputs = realloc(octs->outputs, outputs_len * 2 * sizeof(output_oct_t));
                 if (!octs->outputs) {
-                    goto bailout;
+                    oct_lookup_destroy(octs);
+                    return NULL;
                 }
 
                 short_outs = realloc(short_outs, outputs_len * 2 * sizeof(output_oct_t));
                 if (!short_outs) {
-                    goto bailout;
+                    oct_lookup_destroy(octs);
+                    return NULL;
                 }
 
                 outputs_len *= 2;
@@ -119,16 +123,13 @@ oct_lookup_t *oct_lookup_create(unsigned int rate,
     octs->output_mask = (1 << (rate)) - 1;
     octs->output_width = rate;
 
-    octs->distances = malloc(octs->outputs_len * 2 * sizeof(uint64_t));
+    octs->distances = (distance_oct_t *)malloc(octs->outputs_len * 2 * sizeof(uint64_t));
     if (!octs->distances) {
-        goto bailout;
+        oct_lookup_destroy(octs);
+        return NULL;
     }
 
     return octs;
-
-    bailout:
-        oct_lookup_destroy(octs);
-        return NULL;
 }
 
 // WIP: sse approach to filling the distance table

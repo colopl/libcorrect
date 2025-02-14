@@ -34,7 +34,7 @@ void byte2bit(uint8_t *bytes, uint8_t *bits, size_t n_bits) {
 }
 
 correct_convolutional_polynomial_t *resize_poly_list(correct_convolutional_polynomial_t *polys, size_t cap) {
-    polys = realloc(polys, cap * sizeof(correct_convolutional_polynomial_t));
+    polys = (correct_convolutional_polynomial_t *)realloc(polys, cap * sizeof(correct_convolutional_polynomial_t));
     return polys;
 }
 
@@ -45,7 +45,7 @@ void find_poly_coeff(size_t rate, size_t order, uint8_t *msg, size_t msg_len, li
     //    unknown polynomial "baked in"
 
     // temp poly (this will be the one we search with)
-    correct_convolutional_polynomial_t *poly = malloc(rate * sizeof(correct_convolutional_polynomial_t));
+    correct_convolutional_polynomial_t *poly = (correct_convolutional_polynomial_t *)malloc(rate * sizeof(correct_convolutional_polynomial_t));
 
     // what's the largest coefficient value we'll test?
     correct_convolutional_polynomial_t maxcoeff = (1 << order) - 1;
@@ -72,11 +72,11 @@ void find_poly_coeff(size_t rate, size_t order, uint8_t *msg, size_t msg_len, li
     correct_convolutional_destroy(conv_dummy);
 
     // compact encoded format (this comes from libcorrect)
-    uint8_t *encoded = malloc(enclen * sizeof(uint8_t));
+    uint8_t *encoded = (uint8_t *)malloc(enclen * sizeof(uint8_t));
     // soft encoded format (this goes to libfec, one byte per bit)
-    uint8_t *encoded_bits = malloc(enclen * 8 * sizeof(uint8_t));
+    uint8_t *encoded_bits = (uint8_t *)malloc(enclen * 8 * sizeof(uint8_t));
     // resulting decoded message which we'll compare to our given payload
-    uint8_t *msg_cmp = malloc(msg_len * sizeof(uint8_t));
+    uint8_t *msg_cmp = (uint8_t *)malloc(msg_len * sizeof(uint8_t));
 
     // we keep a list of coefficients which yielded correct decodings
     // there could be 0, 1, or more than 1, and we'll return all of them
@@ -126,6 +126,7 @@ void find_poly_coeff(size_t rate, size_t order, uint8_t *msg, size_t msg_len, li
 
     polys = resize_poly_list(polys, *polys_len);
     *polys_dest = polys;
+
     free(poly);
     free(msg_cmp);
     free(encoded);
@@ -169,6 +170,7 @@ void find_poly(size_t rate, size_t order, libfec_decoder_t libfec, correct_convo
             for (size_t i = 0; i < msg_len; i++) {
                 msg[i] = rand() % 256;
             }
+
             find_poly_coeff(rate, order, msg, msg_len, libfec, &polys, &polys_len, search_coeff);
 
             if (polys_len == 0) {
@@ -231,6 +233,7 @@ void find_poly(size_t rate, size_t order, libfec_decoder_t libfec, correct_convo
 
         free(fit);
     }
+
     printf("\n");
 }
 

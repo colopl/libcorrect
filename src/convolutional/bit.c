@@ -237,7 +237,7 @@ void create_reverse_table(void) {
 }
 
 bit_reader_t *bit_reader_create(const uint8_t *bytes, size_t len) {
-    bit_reader_t *r = calloc(1, sizeof(bit_reader_t));
+    bit_reader_t *r = (bit_reader_t *)calloc(1, sizeof(bit_reader_t));
 
     static bool reverse_table_created = false;
 

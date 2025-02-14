@@ -24,18 +24,13 @@ struct correct_convolutional {
     error_buffer_t *errors;
 };
 
-correct_convolutional *_correct_convolutional_init(correct_convolutional *conv,
-                                                   size_t rate, size_t order,
-                                                   const polynomial_t *poly);
+correct_convolutional *_correct_convolutional_init(correct_convolutional *conv, size_t rate, size_t order, const polynomial_t *poly);
 void _correct_convolutional_teardown(correct_convolutional *conv);
 
 // portable versions
 bool _convolutional_decode_init(correct_convolutional *conv, unsigned int min_traceback, unsigned int traceback_length, unsigned int renormalize_interval);
-void convolutional_decode_warmup(correct_convolutional *conv, unsigned int sets,
-                                 const uint8_t *soft);
-void convolutional_decode_inner(correct_convolutional *conv, unsigned int sets,
-                                const uint8_t *soft);
-void convolutional_decode_tail(correct_convolutional *conv, unsigned int sets,
-                               const uint8_t *soft);
+void convolutional_decode_warmup(correct_convolutional *conv, unsigned int sets, const uint8_t *soft);
+void convolutional_decode_inner(correct_convolutional *conv, unsigned int sets, const uint8_t *soft);
+void convolutional_decode_tail(correct_convolutional *conv, unsigned int sets, const uint8_t *soft);
 
 #endif  /* CORRECT_CONVOLUTIONAL_CONVOLUTIONAL_H */

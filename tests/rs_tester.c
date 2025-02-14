@@ -9,39 +9,33 @@ void shuffle(int *a, size_t len) {
     }
 }
 
-void rs_correct_encode(void *encoder, uint8_t *msg, size_t msg_length,
-                       uint8_t *msg_out) {
-    correct_reed_solomon_encode((correct_reed_solomon *)encoder, msg,
-                                msg_length, msg_out);
+void rs_correct_encode(void *encoder, uint8_t *msg, size_t msg_length, uint8_t *msg_out) {
+    correct_reed_solomon_encode((correct_reed_solomon *)encoder, msg, msg_length, msg_out);
 }
 
-void rs_correct_decode(void *decoder, uint8_t *encoded, size_t encoded_length,
-                       uint8_t *erasure_locations, size_t erasure_length,
-                       uint8_t *msg, size_t pad_length, size_t num_roots) {
+void rs_correct_decode(void *decoder, uint8_t *encoded, size_t encoded_length, uint8_t *erasure_locations, size_t erasure_length, uint8_t *msg, size_t pad_length, size_t num_roots) {
     (void) pad_length;
     (void) num_roots;
 
-    correct_reed_solomon_decode_with_erasures(
-        (correct_reed_solomon *)decoder, encoded, encoded_length,
-        erasure_locations, erasure_length, msg);
+    correct_reed_solomon_decode_with_erasures((correct_reed_solomon *)decoder, encoded, encoded_length, erasure_locations, erasure_length, msg);
 }
 
 rs_testbench *rs_testbench_create(size_t block_length, size_t min_distance) {
-    rs_testbench *testbench = calloc(1, sizeof(rs_testbench));
+    rs_testbench *testbench = (rs_testbench *)calloc(1, sizeof(rs_testbench));
 
     size_t message_length = block_length - min_distance;
     testbench->message_length = message_length;
     testbench->block_length = block_length;
     testbench->min_distance = min_distance;
 
-    testbench->msg = calloc(message_length, sizeof(unsigned char));
-    testbench->encoded = malloc(block_length * sizeof(uint8_t));
+    testbench->msg = (unsigned char *)calloc(message_length, sizeof(unsigned char));
+    testbench->encoded = (uint8_t *)malloc(block_length * sizeof(uint8_t));
 
-    testbench->indices = malloc(block_length * sizeof(int));
+    testbench->indices = (int *)malloc(block_length * sizeof(int));
 
-    testbench->corrupted_encoded = malloc(block_length * sizeof(uint8_t));
-    testbench->erasure_locations = malloc(min_distance * sizeof(uint8_t));
-    testbench->recvmsg = malloc(sizeof(unsigned char) * message_length);
+    testbench->corrupted_encoded = (uint8_t *)malloc(block_length * sizeof(uint8_t));
+    testbench->erasure_locations = (uint8_t *)malloc(min_distance * sizeof(uint8_t));
+    testbench->recvmsg = (unsigned char *)malloc(sizeof(unsigned char) * message_length);
 
     return testbench;
 }
@@ -56,8 +50,7 @@ void rs_testbench_destroy(rs_testbench *testbench) {
     free(testbench);
 }
 
-rs_test_run test_rs_errors(rs_test *test, rs_testbench *testbench, size_t msg_length,
-                    size_t num_errors, size_t num_erasures) {
+rs_test_run test_rs_errors(rs_test *test, rs_testbench *testbench, size_t msg_length, size_t num_errors, size_t num_erasures) {
     rs_test_run run;
     run.output_matches = false;
 
@@ -95,9 +88,7 @@ rs_test_run test_rs_errors(rs_test *test, rs_testbench *testbench, size_t msg_le
         testbench->corrupted_encoded[index] ^= corruption_mask;
     }
 
-    test->decode(test->decoder, testbench->corrupted_encoded, block_length,
-                 testbench->erasure_locations, num_erasures,
-                 testbench->recvmsg, pad_length, testbench->min_distance);
+    test->decode(test->decoder, testbench->corrupted_encoded, block_length, testbench->erasure_locations, num_erasures, testbench->recvmsg, pad_length, testbench->min_distance);
 
     run.output_matches = (bool)(memcmp(testbench->msg, testbench->recvmsg, msg_length) == 0);
 

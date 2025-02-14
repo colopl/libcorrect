@@ -45,6 +45,7 @@ static inline void field_init(field_t *field, field_operation_t primitive_poly) 
         element = element * 2;
         element = (element > 255) ? (element ^ primitive_poly) : element;
         *exp_ptr++ = (field_element_t)element;
+
         if (i < 256) {
             field->log[element] = (field_logarithm_t)i;
         }
@@ -56,9 +57,11 @@ static inline void field_destroy(field_t *field) {
         if (field->exp) {
             free(field->exp);
         }
+
         if (field->log) {
             free(field->log);
         }
+
         free(field);
     }
 }
@@ -164,6 +167,7 @@ static inline field_element_t field_pow(field_t *field, field_element_t elem, in
     if (mod < 0) {
         mod += 255;
     }
+
     return field->exp[mod];
 }
 

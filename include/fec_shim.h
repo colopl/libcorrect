@@ -7,8 +7,7 @@
 #include <correct.h>
 
 // Reed-Solomon
-void *init_rs_char(int symbol_size, int primitive_polynomial, int first_consecutive_root,
-                   int root_gap, int number_roots, unsigned int pad);
+void *init_rs_char(int symbol_size, int primitive_polynomial, int first_consecutive_root, int root_gap, int number_roots, unsigned int pad);
 void free_rs_char(void *rs);
 void encode_rs_char(void *rs, const unsigned char *msg, unsigned char *parity);
 void decode_rs_char(void *rs, unsigned char *block, int *erasure_locations, int num_erasures);

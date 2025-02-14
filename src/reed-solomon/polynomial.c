@@ -1,7 +1,7 @@
 #include "correct/reed-solomon/polynomial.h"
 
 static inline bool polynomial_init(polynomial_t *poly, unsigned int order) {
-    poly->coeff = malloc(sizeof(field_element_t) * (order + 1));
+    poly->coeff = (field_element_t *)malloc(sizeof(field_element_t) * (order + 1));
     if (!poly->coeff) {
         return false;
     }
@@ -89,8 +89,7 @@ void polynomial_mod(field_t *field, polynomial_t *dividend, polynomial_t *diviso
                 continue;
             }
             // all of the multiplication is shifted up by q_order places
-            mod->coeff[j + q_order] = field_add(mod->coeff[j + q_order],
-                        field_mul_log_element(field, field->log[divisor->coeff[j]], q_coeff));
+            mod->coeff[j + q_order] = field_add(mod->coeff[j + q_order], field_mul_log_element(field, field->log[divisor->coeff[j]], q_coeff));
         }
     }
 }
@@ -125,12 +124,12 @@ field_element_t polynomial_eval(field_t *field, polynomial_t *poly, field_elemen
     for (unsigned int i = 0; i <= poly->order; i++) {
         if (poly->coeff[i] != 0) {
             // multiply-accumulate by the next coeff times the next power of val
-            res = field_add(res,
-                    field_mul_log_element(field, field->log[poly->coeff[i]], val_exponentiated));
+            res = field_add(res, field_mul_log_element(field, field->log[poly->coeff[i]], val_exponentiated));
         }
         // now advance to the next power
         val_exponentiated = field_mul_log(val_exponentiated, val_log);
     }
+
     return res;
 }
 
@@ -148,10 +147,10 @@ field_element_t polynomial_eval_lut(field_t *field, polynomial_t *poly, const fi
     for (unsigned int i = 0; i <= poly->order; i++) {
         if (poly->coeff[i] != 0) {
             // multiply-accumulate by the next coeff times the next power of val
-            res = field_add(res,
-                    field_mul_log_element(field, field->log[poly->coeff[i]], val_exp[i]));
+            res = field_add(res, field_mul_log_element(field, field->log[poly->coeff[i]], val_exp[i]));
         }
     }
+
     return res;
 }
 
@@ -173,10 +172,10 @@ field_element_t polynomial_eval_log_lut(field_t *field, polynomial_t *poly_log, 
         // using 0 as a sentinel value in log -- log(0) is really -inf
         if (poly_log->coeff[i] != 0) {
             // multiply-accumulate by the next coeff times the next power of val
-            res = field_add(res,
-                    field_mul_log_element(field, poly_log->coeff[i], val_exp[i]));
+            res = field_add(res, field_mul_log_element(field, poly_log->coeff[i], val_exp[i]));
         }
     }
+
     return res;
 }
 
@@ -236,15 +235,15 @@ polynomial_t *polynomial_init_from_roots(field_t *field, unsigned int nroots, fi
 }
 
 polynomial_t *polynomial_create_from_roots(field_t *field, unsigned int nroots, field_element_t *roots) {
-    polynomial_t *r[2] = {0};
+    polynomial_t *poly, *l, *r[2] = {0};
 
-    polynomial_t *poly = polynomial_create(nroots);
+    poly = polynomial_create(nroots);
     if (!poly) {
         return NULL;
     }
 
     unsigned int order = nroots;
-    polynomial_t *l = polynomial_create(1);
+    l = polynomial_create(1);
     if (!l) {
         goto bailout;
     }

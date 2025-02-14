@@ -11,10 +11,7 @@ size_t correct_convolutional_encode_len(correct_convolutional *conv, size_t msg_
 // poly is written in same order, just & mask message w/ poly
 
 // assume that encoded length is long enough?
-size_t correct_convolutional_encode(correct_convolutional *conv,
-                                    const uint8_t *msg,
-                                    size_t msg_len,
-                                    uint8_t *encoded) {
+size_t correct_convolutional_encode(correct_convolutional *conv, const uint8_t *msg, size_t msg_len, uint8_t *encoded) {
     // convolutional code convolves filter coefficients, given by
     //     the polynomial, with some history from our message.
     //     the history is stored as single subsequent bits in shiftregister
@@ -45,8 +42,7 @@ size_t correct_convolutional_encode(correct_convolutional *conv,
         
         // bit_writer_write expects uint8_t for first arg and unsigned int for second arg
         // Make sure the out value fits within uint8_t range
-        bit_writer_write(conv->bit_writer, (uint8_t)(out & 0xFF), 
-                        (unsigned int)(conv->rate < UINT_MAX ? conv->rate : UINT_MAX));
+        bit_writer_write(conv->bit_writer, (uint8_t)(out & 0xFF), (unsigned int)(conv->rate < UINT_MAX ? conv->rate : UINT_MAX));
     }
 
     // now flush the shiftregister
@@ -56,8 +52,7 @@ size_t correct_convolutional_encode(correct_convolutional *conv,
         shiftregister <<= 1;
         shiftregister &= shiftmask;
         unsigned int out = conv->table[shiftregister];
-        bit_writer_write(conv->bit_writer, (uint8_t)(out & 0xFF),
-                        (unsigned int)(conv->rate < UINT_MAX ? conv->rate : UINT_MAX));
+        bit_writer_write(conv->bit_writer, (uint8_t)(out & 0xFF), (unsigned int)(conv->rate < UINT_MAX ? conv->rate : UINT_MAX));
     }
 
     // 0-fill any remaining bits on our final byte

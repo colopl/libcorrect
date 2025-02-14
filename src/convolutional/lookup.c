@@ -1,9 +1,6 @@
 #include "correct/convolutional/lookup.h"
 
-void fill_table(unsigned int rate,
-                unsigned int order,
-                const polynomial_t *poly,
-                unsigned int *table) {
+void fill_table(unsigned int rate, unsigned int order, const polynomial_t *poly, unsigned int *table) {
     uint64_t table_size = 1ULL << order;
     for (shift_register_t i = 0; i < table_size; i++) {
         unsigned int out = 0;
@@ -51,12 +48,12 @@ pair_lookup_t *pair_lookup_create(unsigned int rate, unsigned int order, const u
 
     size_t pairs_size = (size_t)1 << (order - 1);
     
-    pairs->keys = malloc(sizeof(unsigned int) * pairs_size);
+    pairs->keys = (distance_pair_key_t *)malloc(sizeof(unsigned int) * pairs_size);
     if (!pairs->keys) {
         goto bailout;
     }
 
-    pairs->outputs = calloc(pairs_size + 1, sizeof(unsigned int));
+    pairs->outputs = (output_pair_t *)calloc(pairs_size + 1, sizeof(unsigned int));
     if (!pairs->outputs) {
         goto bailout;
     }
@@ -79,7 +76,7 @@ pair_lookup_t *pair_lookup_create(unsigned int rate, unsigned int order, const u
     
     pairs->output_mask = (1U << rate) - 1U;
     pairs->output_width = rate;
-    pairs->distances = calloc(pairs->outputs_len, sizeof(distance_pair_t));\
+    pairs->distances = (distance_pair_t *)calloc(pairs->outputs_len, sizeof(distance_pair_t));\
     if (!pairs->distances) {
         goto bailout;
     }

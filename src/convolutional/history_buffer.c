@@ -1,10 +1,7 @@
 #include "correct/convolutional/history_buffer.h"
 
-history_buffer *history_buffer_create(unsigned int min_traceback_length,
-                                      unsigned int traceback_group_length,
-                                      unsigned int renormalize_interval, unsigned int num_states,
-                                      shift_register_t highbit) {
-    history_buffer *buf = calloc(1, sizeof(history_buffer));
+history_buffer *history_buffer_create(unsigned int min_traceback_length, unsigned int traceback_group_length, unsigned int renormalize_interval, unsigned int num_states, shift_register_t highbit) {
+    history_buffer *buf = (history_buffer *)calloc(1, sizeof(history_buffer));
 
     buf->min_traceback_length = min_traceback_length;
     buf->traceback_group_length = traceback_group_length;
@@ -12,11 +9,11 @@ history_buffer *history_buffer_create(unsigned int min_traceback_length,
     buf->num_states = num_states;
     buf->highbit = highbit;
 
-    buf->history = malloc(buf->cap * sizeof(uint8_t *));
+    buf->history = (uint8_t **)malloc(buf->cap * sizeof(uint8_t *));
     for (unsigned int i = 0; i < buf->cap; i++) {
-        buf->history[i] = calloc(num_states, sizeof(uint8_t));
+        buf->history[i] = (uint8_t *)calloc(num_states, sizeof(uint8_t));
     }
-    buf->fetched = malloc(buf->cap * sizeof(uint8_t));
+    buf->fetched = (uint8_t *)malloc(buf->cap * sizeof(uint8_t));
 
     buf->index = 0;
     buf->len = 0;
@@ -41,10 +38,11 @@ void history_buffer_reset(history_buffer *buf) {
     buf->index = 0;
 }
 
-uint8_t *history_buffer_get_slice(history_buffer *buf) { return buf->history[buf->index]; }
+uint8_t *history_buffer_get_slice(history_buffer *buf) {
+    return buf->history[buf->index];
+}
 
-shift_register_t history_buffer_search(history_buffer *buf, const distance_t *distances,
-                                       unsigned int search_every) {
+shift_register_t history_buffer_search(history_buffer *buf, const distance_t *distances, unsigned int search_every) {
     shift_register_t bestpath = 0;
     distance_t leasterror = USHRT_MAX;
     // search for a state with the least error
@@ -57,16 +55,14 @@ shift_register_t history_buffer_search(history_buffer *buf, const distance_t *di
     return bestpath;
 }
 
-void history_buffer_renormalize(history_buffer *buf, distance_t *distances,
-                                shift_register_t min_register) {
+void history_buffer_renormalize(history_buffer *buf, distance_t *distances, shift_register_t min_register) {
     distance_t min_distance = distances[min_register];
     for (shift_register_t i = 0; i < buf->num_states; i++) {
         distances[i] -= min_distance;
     }
 }
 
-void history_buffer_traceback(history_buffer *buf, shift_register_t bestpath,
-                              unsigned int min_traceback_length, bit_writer_t *output) {
+void history_buffer_traceback(history_buffer *buf, shift_register_t bestpath, unsigned int min_traceback_length, bit_writer_t *output) {
     unsigned int fetched_index = 0;
     shift_register_t highbit = buf->highbit;
     unsigned int index = buf->index;
@@ -86,12 +82,14 @@ void history_buffer_traceback(history_buffer *buf, shift_register_t bestpath,
         bestpath |= pathbit;
         bestpath >>= 1;
     }
+
     unsigned int prefetch_index = index;
     if (prefetch_index == 0) {
         prefetch_index = cap - 1;
     } else {
         prefetch_index--;
     }
+
     unsigned int len = buf->len;
     for (unsigned int j = min_traceback_length; j < len; j++) {
         index = prefetch_index;
@@ -112,12 +110,12 @@ void history_buffer_traceback(history_buffer *buf, shift_register_t bestpath,
         buf->fetched[fetched_index] = (pathbit ? 1 : 0);
         fetched_index++;
     }
+
     bit_writer_write_bitlist_reversed(output, buf->fetched, fetched_index);
     buf->len -= fetched_index;
 }
 
-void history_buffer_process_skip(history_buffer *buf, distance_t *distances, bit_writer_t *output,
-                                 unsigned int skip) {
+void history_buffer_process_skip(history_buffer *buf, distance_t *distances, bit_writer_t *output, unsigned int skip) {
     buf->index++;
     if (buf->index == buf->cap) {
         buf->index = 0;
