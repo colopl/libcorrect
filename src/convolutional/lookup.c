@@ -21,26 +21,22 @@ pair_lookup_t pair_lookup_create(unsigned int rate,
                                 const unsigned int *table) {
     pair_lookup_t pairs;
 
-    uint64_t pairs_size = 1ULL << (order - 1);
+    size_t pairs_size = (size_t)1 << (order - 1);
     pairs.keys = malloc(sizeof(unsigned int) * pairs_size);
-    pairs.outputs = calloc((size_t)pairs_size + 1, sizeof(unsigned int));
+    pairs.outputs = calloc(pairs_size + 1, sizeof(unsigned int));
     unsigned int *inv_outputs = (unsigned int *)calloc((size_t)1 << (rate * 2), sizeof(unsigned int));
     unsigned int output_counter = 1;
 
-    for (uint64_t i = 0; i < pairs_size; i++) {
-        // first get the concatenated pair of outputs
+    for (size_t i = 0; i < pairs_size; i++) {
         unsigned int out = table[i * 2 + 1];
         out <<= rate;
         out |= table[i * 2];
 
-        // does this concatenated output exist in the outputs table yet?
         if (!inv_outputs[out]) {
-            // doesn't exist, allocate a new key
             inv_outputs[out] = output_counter;
             pairs.outputs[output_counter] = out;
             output_counter++;
         }
-        // set the opaque key for the ith shift register state to the concatenated output entry
         pairs.keys[i] = inv_outputs[out];
     }
     pairs.outputs_len = output_counter;
