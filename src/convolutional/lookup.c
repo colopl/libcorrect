@@ -16,15 +16,47 @@ void fill_table(unsigned int rate,
     }
 }
 
-pair_lookup_t pair_lookup_create(unsigned int rate,
-                                unsigned int order,
-                                const unsigned int *table) {
-    pair_lookup_t pairs;
+void pair_lookup_destroy(pair_lookup_t *pairs) {
+    if (pairs) {
+        if (pairs->keys) {
+            free(pairs->keys);
+        }
+
+        if (pairs->outputs) {
+            free(pairs->outputs);
+        }
+
+        if (pairs->distances) {
+            free(pairs->distances);
+        }
+        
+        free(pairs);
+    }
+}
+
+pair_lookup_t *pair_lookup_create(unsigned int rate, unsigned int order, const unsigned int *table) {
+    unsigned int *inv_outputs = (unsigned int *)calloc((size_t)1 << (rate * 2), sizeof(unsigned int));
+    if (!inv_outputs) {
+        return NULL;
+    }
+
+    pair_lookup_t *pairs = (pair_lookup_t *)calloc(1, sizeof(pair_lookup_t));
+    if (!pairs) {
+        goto bailout;
+    }
 
     size_t pairs_size = (size_t)1 << (order - 1);
-    pairs.keys = malloc(sizeof(unsigned int) * pairs_size);
-    pairs.outputs = calloc(pairs_size + 1, sizeof(unsigned int));
-    unsigned int *inv_outputs = (unsigned int *)calloc((size_t)1 << (rate * 2), sizeof(unsigned int));
+    
+    pairs->keys = malloc(sizeof(unsigned int) * pairs_size);
+    if (!pairs->keys) {
+        goto bailout;
+    }
+
+    pairs->outputs = calloc(pairs_size + 1, sizeof(unsigned int));
+    if (!pairs->outputs) {
+        goto bailout;
+    }
+
     unsigned int output_counter = 1;
 
     for (size_t i = 0; i < pairs_size; i++) {
@@ -34,33 +66,49 @@ pair_lookup_t pair_lookup_create(unsigned int rate,
 
         if (!inv_outputs[out]) {
             inv_outputs[out] = output_counter;
-            pairs.outputs[output_counter] = out;
+            pairs->outputs[output_counter] = out;
             output_counter++;
         }
-        pairs.keys[i] = inv_outputs[out];
+        pairs->keys[i] = inv_outputs[out];
     }
-    pairs.outputs_len = output_counter;
+    pairs->outputs_len = output_counter;
     
-    pairs.output_mask = (1U << rate) - 1U;
-    pairs.output_width = rate;
-    pairs.distances = calloc(pairs.outputs_len, sizeof(distance_pair_t));
+    pairs->output_mask = (1U << rate) - 1U;
+    pairs->output_width = rate;
+    pairs->distances = calloc(pairs->outputs_len, sizeof(distance_pair_t));\
+    if (!pairs->distances) {
+        goto bailout;
+    }
+
     free(inv_outputs);
+
     return pairs;
+
+    bailout:
+        if (inv_outputs) {
+            free(inv_outputs);
+        }
+
+        if (pairs) {
+            if (pairs->keys) {
+                free(pairs->keys);
+            }
+            if (pairs->outputs) {
+                free(pairs->outputs);
+            }
+            free(pairs);
+        }
+
+        return NULL;
 }
 
-void pair_lookup_destroy(pair_lookup_t pairs) {
-    free(pairs.keys);
-    free(pairs.outputs);
-    free(pairs.distances);
-}
-
-void pair_lookup_fill_distance(pair_lookup_t pairs, distance_t *distances) {
-    for (unsigned int i = 1; i < pairs.outputs_len; i += 1) {
-        output_pair_t concat_out = pairs.outputs[i];
-        unsigned int i_0 = concat_out & pairs.output_mask;
-        concat_out >>= pairs.output_width;
+void pair_lookup_fill_distance(pair_lookup_t *pairs, distance_t *distances) {
+    for (unsigned int i = 1; i < pairs->outputs_len; i += 1) {
+        output_pair_t concat_out = pairs->outputs[i];
+        unsigned int i_0 = concat_out & pairs->output_mask;
+        concat_out >>= pairs->output_width;
         unsigned int i_1 = concat_out;
 
-        pairs.distances[i] = (distances[i_1] << 16) | distances[i_0];
+        pairs->distances[i] = (distances[i_1] << 16) | distances[i_0];
     }
 }

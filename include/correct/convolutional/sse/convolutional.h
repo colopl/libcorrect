@@ -13,7 +13,7 @@
 
 struct correct_convolutional_sse {
     correct_convolutional base_conv;
-    oct_lookup_t oct_lookup;
+    oct_lookup_t *oct_lookup;
 };
 
 #endif  /* CORRECT_CONVOLUTIONAL_SSE_H */

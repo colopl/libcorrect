@@ -34,6 +34,9 @@ correct_convolutional *_correct_convolutional_init(correct_convolutional *conv,
 correct_convolutional *correct_convolutional_create(size_t rate, size_t order,
                                                     const polynomial_t *poly) {
     correct_convolutional *conv = malloc(sizeof(correct_convolutional));
+    if (!conv) {
+        return NULL;
+    }
     correct_convolutional *init_conv = _correct_convolutional_init(conv, rate, order, poly);
     if (!init_conv) {
         free(conv);

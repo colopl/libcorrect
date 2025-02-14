@@ -62,8 +62,15 @@ static inline field_t *field_create(field_operation_t primitive_poly) {
 }
 
 static inline void field_destroy(field_t *field) {
-    free(*(field_element_t **)&field->exp);
-    free(*(field_element_t **)&field->log);
+    if (field) {
+        if (field->exp) {
+            free(field->exp);
+        }
+        if (field->log) {
+            free(field->log);
+        }
+        free(field);
+    }
 }
 
 static inline field_element_t field_add(field_element_t l, field_element_t r) {

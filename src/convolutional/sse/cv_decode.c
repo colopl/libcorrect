@@ -31,7 +31,7 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
                 distances[i] = metric_distance(i, out);
             }
         }
-        oct_lookup_t oct_lookup = sse_conv->oct_lookup;
+        oct_lookup_t *oct_lookup = sse_conv->oct_lookup;
         oct_lookup_fill_distance(oct_lookup, distances);
 
         // a mask to get the high order bit from the shift register
@@ -129,21 +129,21 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
                 // 0x80800504, 0x80800706};
 
                 // load the opaque oct distance table keys from out loop index
-                distance_oct_key_t low_key = oct_lookup.keys[oct + (base_offset / 4)];
-                distance_oct_key_t low_key0 = oct_lookup.keys[oct + (base_offset / 4) + 1];
-                distance_oct_key_t low_key1 = oct_lookup.keys[oct + (base_offset / 4) + 2];
-                distance_oct_key_t low_key2 = oct_lookup.keys[oct + (base_offset / 4) + 3];
+                distance_oct_key_t low_key = oct_lookup->keys[oct + (base_offset / 4)];
+                distance_oct_key_t low_key0 = oct_lookup->keys[oct + (base_offset / 4) + 1];
+                distance_oct_key_t low_key1 = oct_lookup->keys[oct + (base_offset / 4) + 2];
+                distance_oct_key_t low_key2 = oct_lookup->keys[oct + (base_offset / 4) + 3];
 
                 // load the distances for the register states with high order
                 // bit cleared
                 __m128i low_this_error =
-                    _mm_load_si128((const __m128i *)(oct_lookup.distances + low_key));
+                    _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key));
                 __m128i low_this_error0 =
-                    _mm_load_si128((const __m128i *)(oct_lookup.distances + low_key0));
+                    _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key0));
                 __m128i low_this_error1 =
-                    _mm_load_si128((const __m128i *)(oct_lookup.distances + low_key1));
+                    _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key1));
                 __m128i low_this_error2 =
-                    _mm_load_si128((const __m128i *)(oct_lookup.distances + low_key2));
+                    _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key2));
 
                 // add the distance for this time slice to the past distances
                 __m128i low_error = _mm_add_epi16(low_past_error, low_this_error);
@@ -154,22 +154,22 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
                 // repeat oct distance table lookup for registers with high
                 // order bit set
                 distance_oct_key_t high_key =
-                    oct_lookup.keys[oct_highbase + oct + (base_offset / 4)];
+                    oct_lookup->keys[oct_highbase + oct + (base_offset / 4)];
                 distance_oct_key_t high_key0 =
-                    oct_lookup.keys[oct_highbase + oct + (base_offset / 4) + 1];
+                    oct_lookup->keys[oct_highbase + oct + (base_offset / 4) + 1];
                 distance_oct_key_t high_key1 =
-                    oct_lookup.keys[oct_highbase + oct + (base_offset / 4) + 2];
+                    oct_lookup->keys[oct_highbase + oct + (base_offset / 4) + 2];
                 distance_oct_key_t high_key2 =
-                    oct_lookup.keys[oct_highbase + oct + (base_offset / 4) + 3];
+                    oct_lookup->keys[oct_highbase + oct + (base_offset / 4) + 3];
 
                 __m128i high_this_error =
-                    _mm_load_si128((const __m128i *)(oct_lookup.distances + high_key));
+                    _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key));
                 __m128i high_this_error0 =
-                    _mm_load_si128((const __m128i *)(oct_lookup.distances + high_key0));
+                    _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key0));
                 __m128i high_this_error1 =
-                    _mm_load_si128((const __m128i *)(oct_lookup.distances + high_key1));
+                    _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key1));
                 __m128i high_this_error2 =
-                    _mm_load_si128((const __m128i *)(oct_lookup.distances + high_key2));
+                    _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key2));
 
                 __m128i high_error = _mm_add_epi16(high_past_error, high_this_error);
                 __m128i high_error0 = _mm_add_epi16(high_past_error0, high_this_error0);
@@ -248,14 +248,17 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
     conv->history_buffer->renormalize_counter = hist_buf_rn_cnt;
 }
 
-static void _convolutional_sse_decode_init(correct_convolutional_sse *conv,
+static bool _convolutional_sse_decode_init(correct_convolutional_sse *conv,
                                            unsigned int min_traceback,
                                            unsigned int traceback_length,
                                            unsigned int renormalize_interval) {
-    _convolutional_decode_init(&conv->base_conv, min_traceback, traceback_length,
-                               renormalize_interval);
-    conv->oct_lookup =
-        oct_lookup_create(conv->base_conv.rate, conv->base_conv.order, conv->base_conv.table);
+    if (!_convolutional_decode_init(&conv->base_conv, min_traceback, traceback_length, renormalize_interval)) {
+        return false;
+    }
+    
+    conv->oct_lookup = oct_lookup_create(conv->base_conv.rate, conv->base_conv.order, conv->base_conv.table);
+
+    return true;
 }
 
 static ssize_t _convolutional_sse_decode(correct_convolutional_sse *sse_conv,
@@ -267,8 +270,9 @@ static ssize_t _convolutional_sse_decode(correct_convolutional_sse *sse_conv,
         // sse implementation unfortunately uses signed math on our unsigned values
         // reduces usable distance by /2
         unsigned int renormalize_interval = (distance_max / 2) / max_error_per_input;
-        _convolutional_sse_decode_init(sse_conv, 5 * conv->order, 100 * conv->order,
-                                       renormalize_interval);
+        if(!_convolutional_sse_decode_init(sse_conv, 5 * conv->order, 100 * conv->order, renormalize_interval)) {
+            return -1;
+        }
     }
 
     size_t sets = num_encoded_bits / conv->rate;

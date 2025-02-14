@@ -18,7 +18,7 @@ struct correct_convolutional {
 
     bool has_init_decode;
     distance_t *distances;
-    pair_lookup_t pair_lookup;
+    pair_lookup_t *pair_lookup;
     soft_measurement_t soft_measurement;
     history_buffer *history_buffer;
     error_buffer_t *errors;
@@ -30,7 +30,7 @@ correct_convolutional *_correct_convolutional_init(correct_convolutional *conv,
 void _correct_convolutional_teardown(correct_convolutional *conv);
 
 // portable versions
-void _convolutional_decode_init(correct_convolutional *conv, unsigned int min_traceback, unsigned int traceback_length, unsigned int renormalize_interval);
+bool _convolutional_decode_init(correct_convolutional *conv, unsigned int min_traceback, unsigned int traceback_length, unsigned int renormalize_interval);
 void convolutional_decode_warmup(correct_convolutional *conv, unsigned int sets,
                                  const uint8_t *soft);
 void convolutional_decode_inner(correct_convolutional *conv, unsigned int sets,

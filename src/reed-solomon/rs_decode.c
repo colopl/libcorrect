@@ -1,5 +1,13 @@
 #include "correct/reed-solomon/encode.h"
 
+static inline bool is_valid_alloc_size(size_t size) {
+    return size > 0 && size <= SIZE_MAX / 2;
+}
+
+static inline bool is_valid_buffer_access(size_t index, size_t buffer_size) {
+    return index < buffer_size;
+}
+
 // calculate all syndromes of the received polynomial at the roots of the generator
 // because we're evaluating at the roots of the generator, and because the transmitted
 //   polynomial was made to be a product of the generator, we know that the transmitted
@@ -308,7 +316,12 @@ void correct_reed_solomon_decoder_create(correct_reed_solomon *rs) {
  */
 ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *encoded, size_t encoded_length,
                                     uint8_t *msg) {
-    if (encoded_length > rs->block_length) {
+    if (!rs ||
+        !encoded ||
+        !msg ||
+        encoded_length > rs->block_length ||
+        !is_valid_alloc_size(encoded_length * sizeof(uint8_t))
+    ) {
         return -2;
     }
 
@@ -328,13 +341,20 @@ ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *enc
     // so we're going to flip and then write padding
     // the final copied buffer will look like
     // | rem (rs->min_distance) | msg (msg_length) | pad (pad_length) |
-
     for (unsigned int i = 0; i < encoded_length; i++) {
+        if (!is_valid_buffer_access(encoded_length - (i + 1), encoded_length)) {
+            return -2;
+        }
+
         rs->received_polynomial->coeff[i] = encoded[encoded_length - (i + 1)];
     }
 
     // fill the pad_length with 0s
     for (unsigned int i = 0; i < pad_length; i++) {
+        if (!is_valid_buffer_access(i + encoded_length, rs->block_length)) {
+            return -2;
+        }
+
         rs->received_polynomial->coeff[i + encoded_length] = 0;
     }
 
@@ -364,8 +384,9 @@ ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *enc
     }
     rs->error_locator_log->order = rs->error_locator->order;
 
-    if (!reed_solomon_factorize_error_locator(rs->field, 0, rs->error_locator_log, rs->error_roots, rs->element_exp)) {
-        // roots couldn't be found, so there were too many errors to deal with
+    if (!rs->error_locations ||
+        !reed_solomon_factorize_error_locator(rs->field, 0, rs->error_locator_log, rs->error_roots, rs->element_exp)) {
+        // roots couldn't be found or validate failed, so there were too many errors to deal with
         // RS has failed for this message
         return -1;
     }

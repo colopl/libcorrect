@@ -20,10 +20,10 @@ void fill_table(unsigned int order,
                 unsigned int rate,
                 const polynomial_t *poly,
                 unsigned int *table);
-pair_lookup_t pair_lookup_create(unsigned int rate,
+pair_lookup_t *pair_lookup_create(unsigned int rate,
                                  unsigned int order,
                                  const unsigned int *table);
-void pair_lookup_destroy(pair_lookup_t pairs);
-void pair_lookup_fill_distance(pair_lookup_t pairs, distance_t *distances);
+void pair_lookup_destroy(pair_lookup_t *pairs);
+void pair_lookup_fill_distance(pair_lookup_t *pairs, distance_t *distances);
 
 #endif /* CORRECT_CONVOLUTIONAL_LOOKUP_H */
