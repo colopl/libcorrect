@@ -1,4 +1,5 @@
 #include "rs_tester_fec_shim.h"
+
 void rs_fec_encode(void *encoder, uint8_t *msg, size_t msg_length,
                    uint8_t *msg_out) {
     // XXX make sure that pad length used to build encoder corresponds to this
