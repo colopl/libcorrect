@@ -358,8 +358,7 @@ ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *enc
         rs->received_polynomial->coeff[i + encoded_length] = 0;
     }
 
-    bool all_zero = reed_solomon_find_syndromes(rs->field, rs->received_polynomial, rs->generator_root_exp,
-                                                rs->syndromes, rs->min_distance);
+    bool all_zero = reed_solomon_find_syndromes(rs->field, rs->received_polynomial, rs->generator_root_exp, rs->syndromes, rs->min_distance);
 
     if (all_zero) {
         // syndromes were all zero, so there was no error in the message
@@ -367,43 +366,36 @@ ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *enc
         for (unsigned int i = 0; i < msg_length; i++) {
             msg[i] = rs->received_polynomial->coeff[encoded_length - (i + 1)];
         }
+
         return 0;  // No errors were found
     }
 
     unsigned int order = reed_solomon_find_error_locator(rs, 0);
-    // XXX fix this vvvv
     rs->error_locator->order = order;
 
     for (unsigned int i = 0; i <= rs->error_locator->order; i++) {
-        // this is a little strange since the coeffs are logs, not elements
-        // also, we'll be storing log(0) = 0 for any 0 coeffs in the error locator
-        // that would seem bad but we'll just be using this in chien search, and we'll skip all 0 coeffs
-        // (you might point out that log(1) also = 0, which would seem to alias. however, that's ok,
-        //   because log(1) = 255 as well, and in fact that's how it's represented in our log table)
         rs->error_locator_log->coeff[i] = rs->field->log[rs->error_locator->coeff[i]];
     }
     rs->error_locator_log->order = rs->error_locator->order;
 
-    if (!rs->error_locations ||
-        !reed_solomon_factorize_error_locator(rs->field, 0, rs->error_locator_log, rs->error_roots, rs->element_exp)) {
+    if (!reed_solomon_factorize_error_locator(rs->field, 0, rs->error_locator_log, rs->error_roots, rs->element_exp)) {
         // roots couldn't be found or validate failed, so there were too many errors to deal with
-        // RS has failed for this message
         return -1;
     }
 
-    reed_solomon_find_error_locations(rs->field, rs->generator_root_gap, rs->error_roots, rs->error_locations,
-                                      rs->error_locator->order, 0);
+    reed_solomon_find_error_locations(rs->field, rs->generator_root_gap, rs->error_roots, rs->error_locations, rs->error_locator->order, 0);
 
     reed_solomon_find_error_values(rs);
 
     // Number of errors is equal to the order of the error locator polynomial
     size_t num_errors = rs->error_locator->order;
 
+    // Apply error corrections
     for (unsigned int i = 0; i < num_errors; i++) {
-        rs->received_polynomial->coeff[rs->error_locations[i]] =
-            field_sub(rs->received_polynomial->coeff[rs->error_locations[i]], rs->error_vals[i]);
+        rs->received_polynomial->coeff[rs->error_locations[i]] = field_sub(rs->received_polynomial->coeff[rs->error_locations[i]], rs->error_vals[i]);
     }
 
+    // Copy corrected message to output buffer
     for (unsigned int i = 0; i < msg_length; i++) {
         msg[i] = rs->received_polynomial->coeff[encoded_length - (i + 1)];
     }

@@ -35,6 +35,10 @@ void pair_lookup_destroy(pair_lookup_t *pairs) {
 }
 
 pair_lookup_t *pair_lookup_create(unsigned int rate, unsigned int order, const unsigned int *table) {
+    if (!table) {
+        return NULL;
+    }
+
     unsigned int *inv_outputs = (unsigned int *)calloc((size_t)1 << (rate * 2), sizeof(unsigned int));
     if (!inv_outputs) {
         return NULL;
@@ -90,13 +94,7 @@ pair_lookup_t *pair_lookup_create(unsigned int rate, unsigned int order, const u
         }
 
         if (pairs) {
-            if (pairs->keys) {
-                free(pairs->keys);
-            }
-            if (pairs->outputs) {
-                free(pairs->outputs);
-            }
-            free(pairs);
+            pair_lookup_destroy(pairs);
         }
 
         return NULL;
