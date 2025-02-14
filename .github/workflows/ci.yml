@@ -41,6 +41,7 @@ jobs:
   Windows:
     strategy:
       matrix:
+        architecture: ['x64', 'x86']
         include:
           - runs-on: windows-2019
             generator: Visual Studio 16 2019
@@ -56,7 +57,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "${{ matrix.generator }}" -A x64
+          cmake .. -G "${{ matrix.generator }}" -A "${{ matrix.architecture }}"
           cmake --build . --config Release --target shim
           cmake --build . --config Release --target test_runners
           cd "tests"
