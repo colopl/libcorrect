@@ -1,21 +1,29 @@
 name: CI
+
 on:
   push:
     branches:
-        - master
+      - master
   pull_request:
   workflow_dispatch:
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+
 jobs:
   Linux:
     strategy:
       matrix:
-        include:
-          - runs-on: 'ubuntu-24.04-arm'
-            platform: ['linux/arm64']
-            image: ['debian:bookworm', 'alpine:3.21']
+        runs-on: ['ubuntu-24.04-arm', 'ubuntu-24.04']
+        platform: ['linux/arm64', 'linux/i386', 'linux/amd64']
+        image: ['debian:bookworm', 'alpine:3.21']
+        exclude:
           - runs-on: 'ubuntu-24.04'
-            platform: ['linux/i386', 'linux/amd64']
-            image: ['debian:bookworm', 'alpine:3.21']
+            platform: 'linux/arm64'
+          - runs-on: 'ubuntu-24.04-arm'
+            platform: 'linux/i386'
+          - runs-on: 'ubuntu-24.04-arm'
+            platform: 'linux/amd64'
     runs-on: ${{ matrix.runs-on }}
     steps:
       - name: Checkout
@@ -26,6 +34,7 @@ jobs:
       - name: Build and test on container
         run: |
           docker run --rm --platform=${{ matrix.platform }} -i ci
+
   macOS:
     strategy:
       matrix:
@@ -42,19 +51,15 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE="${{ matrix.type }}"
           make -j"$(sysctl -n hw.ncpu)" shim
           make check
-    env:
-      CTEST_OUTPUT_ON_FAILURE: 1
   Windows:
     strategy:
       matrix:
         architecture: ['x64', 'x86']
         type: ['Debug', 'Release']
-        include:
-          - runs-on: windows-2019
-            generator: Visual Studio 16 2019
-          - runs-on: windows-2022
-            generator: Visual Studio 17 2022
-    runs-on: ${{ matrix.runs-on }}
+        vs_version:
+          - { runs-on: 'windows-2019', generator: 'Visual Studio 16 2019' }
+          - { runs-on: 'windows-2022', generator: 'Visual Studio 17 2022' }
+    runs-on: ${{ matrix.vs_version.runs-on }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,10 +69,8 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "${{ matrix.generator }}" -A "${{ matrix.architecture }}"
+          cmake .. -G "${{ matrix.vs_version.generator }}" -A "${{ matrix.architecture }}"
           cmake --build . --config "${{ matrix.type }}" --target shim
           cmake --build . --config "${{ matrix.type }}" --target test_runners
           cd "tests"
           ctest -C "${{ matrix.type }}" --output-on-failure
-        env:
-          CTEST_OUTPUT_ON_FAILURE: 1
