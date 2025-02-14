@@ -23,7 +23,7 @@ size_t correct_convolutional_encode(correct_convolutional *conv,
     // shiftmask is the shiftregister bit mask that removes bits
     //      that extend beyond order
     // e.g. if order is 7, then remove the 8th bit and beyond
-    unsigned int shiftmask = (1 << conv->order) - 1;
+    unsigned int shiftmask = (1U << conv->order) - 1;
 
     size_t encoded_len_bits = correct_convolutional_encode_len(conv, msg_len);
     size_t encoded_len = (encoded_len_bits % 8) ? (encoded_len_bits / 8 + 1) : (encoded_len_bits / 8);
@@ -34,14 +34,19 @@ size_t correct_convolutional_encode(correct_convolutional *conv,
     for (size_t i = 0; i < 8 * msg_len; i++) {
         // shiftregister has oldest bits on left, newest on right
         shiftregister <<= 1;
-        shiftregister |= bit_reader_read(conv->bit_reader, 1);
+        unsigned int bit = bit_reader_read(conv->bit_reader, 1);
+        shiftregister |= bit;
         shiftregister &= shiftmask;
         // shift most significant bit from byte and move down one bit at a time
 
         // we do direct lookup of our convolutional output here
         // all of the bits from this convolution are stored in this row
         unsigned int out = conv->table[shiftregister];
-        bit_writer_write(conv->bit_writer, out, conv->rate);
+        
+        // bit_writer_write expects uint8_t for first arg and unsigned int for second arg
+        // Make sure the out value fits within uint8_t range
+        bit_writer_write(conv->bit_writer, (uint8_t)(out & 0xFF), 
+                        (unsigned int)(conv->rate < UINT_MAX ? conv->rate : UINT_MAX));
     }
 
     // now flush the shiftregister
@@ -51,7 +56,8 @@ size_t correct_convolutional_encode(correct_convolutional *conv,
         shiftregister <<= 1;
         shiftregister &= shiftmask;
         unsigned int out = conv->table[shiftregister];
-        bit_writer_write(conv->bit_writer, out, conv->rate);
+        bit_writer_write(conv->bit_writer, (uint8_t)(out & 0xFF),
+                        (unsigned int)(conv->rate < UINT_MAX ? conv->rate : UINT_MAX));
     }
 
     // 0-fill any remaining bits on our final byte

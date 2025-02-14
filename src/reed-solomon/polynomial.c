@@ -82,7 +82,7 @@ void polynomial_mod(field_t *field, polynomial_t *dividend, polynomial_t *diviso
     }
 }
 
-void polynomial_formal_derivative(field_t *field, polynomial_t *poly, polynomial_t *der) {
+void polynomial_formal_derivative(polynomial_t *poly, polynomial_t *der) {
     // if f(x) = a(n)*x^n + ... + a(1)*x + a(0)
     // then f'(x) = n*a(n)*x^(n-1) + ... + 2*a(2)*x + a(1)
     // where n*a(n) = sum(k=1, n, a(n)) e.g. the nth sum of a(n) in GF(2^8)

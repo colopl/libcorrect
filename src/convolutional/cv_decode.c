@@ -7,7 +7,7 @@ void convolutional_decode_warmup(correct_convolutional *conv, unsigned int sets,
     for (unsigned int i = 0; i < conv->order - 1 && i < sets; i++) {
         // peel off rate bits from encoded to recover the same `out` as in the encoding process
         // the difference being that this `out` will have the channel noise/errors applied
-        unsigned int out;
+        unsigned int out = 0;
         if (!soft) {
             out = bit_reader_read(conv->bit_reader, conv->rate);
         }
@@ -15,7 +15,7 @@ void convolutional_decode_warmup(correct_convolutional *conv, unsigned int sets,
         distance_t *write_errors = conv->errors->write_errors;
         // walk all of the state we have so far
         for (size_t j = 0; j < ((size_t)1u << (i + 1)); j += 1) {
-            unsigned int last = j >> 1;
+            size_t last = j >> 1;
             distance_t dist;
             if (soft) {
                 if (conv->soft_measurement == CORRECT_SOFT_LINEAR) {
@@ -26,7 +26,7 @@ void convolutional_decode_warmup(correct_convolutional *conv, unsigned int sets,
                                                           conv->rate);
                 }
             } else {
-                dist = metric_distance(conv->table[j], out);
+                dist = metric_distance((unsigned int)conv->table[j], out);
             }
             write_errors[j] = dist + read_errors[last];
         }
@@ -37,7 +37,7 @@ void convolutional_decode_warmup(correct_convolutional *conv, unsigned int sets,
 void convolutional_decode_inner(correct_convolutional *conv, unsigned int sets,
                                 const uint8_t *soft) {
     shift_register_t highbit = 1 << (conv->order - 1);
-    for (unsigned int i = conv->order - 1; i < (sets - conv->order + 1); i++) {
+    for (size_t i = conv->order - 1; i < (sets - conv->order + 1); i++) {
         distance_t *distances = conv->distances;
         // lasterrors are the aggregate bit errors for the states of shiftregister for the previous
         // time slice
@@ -154,7 +154,7 @@ void convolutional_decode_tail(correct_convolutional *conv, unsigned int sets,
     // flush state registers
     // now we only shift in 0s, skipping 1-successors
     shift_register_t highbit = 1 << (conv->order - 1);
-    for (unsigned int i = sets - conv->order + 1; i < sets; i++) {
+    for (size_t i = sets - conv->order + 1; i < sets; i++) {
         // lasterrors are the aggregate bit errors for the states of shiftregister for the previous
         // time slice
         const distance_t *read_errors = conv->errors->read_errors;
@@ -227,8 +227,8 @@ void _convolutional_decode_init(correct_convolutional *conv, unsigned int min_tr
                                 unsigned int traceback_length, unsigned int renormalize_interval) {
     conv->has_init_decode = true;
 
-    conv->distances = calloc(1 << (conv->rate), sizeof(distance_t));
-    conv->pair_lookup = pair_lookup_create(conv->rate, conv->order, conv->table);
+    conv->distances = calloc((size_t)1 << (conv->rate), sizeof(distance_t));
+    conv->pair_lookup = pair_lookup_create((unsigned int)conv->rate, (unsigned int)conv->order, conv->table);
 
     conv->soft_measurement = CORRECT_SOFT_LINEAR;
 
@@ -243,9 +243,9 @@ static ssize_t _convolutional_decode(correct_convolutional *conv, size_t num_enc
                                      size_t num_encoded_bytes, uint8_t *msg,
                                      const soft_t *soft_encoded) {
     if (!conv->has_init_decode) {
-        uint64_t max_error_per_input = conv->rate * soft_max;
+        unsigned int max_error_per_input = (unsigned int)(conv->rate * soft_max);
         unsigned int renormalize_interval = distance_max / max_error_per_input;
-        _convolutional_decode_init(conv, 5 * conv->order, 15 * conv->order, renormalize_interval);
+        _convolutional_decode_init(conv, (unsigned int)(5 * conv->order), (unsigned int)(15 * conv->order), renormalize_interval);
     }
 
     size_t sets = num_encoded_bits / conv->rate;
@@ -257,9 +257,9 @@ static ssize_t _convolutional_decode(correct_convolutional *conv, size_t num_enc
     history_buffer_reset(conv->history_buffer);
 
     // no outputs are generated during warmup
-    convolutional_decode_warmup(conv, sets, soft_encoded);
-    convolutional_decode_inner(conv, sets, soft_encoded);
-    convolutional_decode_tail(conv, sets, soft_encoded);
+    convolutional_decode_warmup(conv, (unsigned int)sets, soft_encoded);
+    convolutional_decode_inner(conv, (unsigned int)sets, soft_encoded);
+    convolutional_decode_tail(conv, (unsigned int)sets, soft_encoded);
 
     history_buffer_flush(conv->history_buffer, conv->bit_writer);
 

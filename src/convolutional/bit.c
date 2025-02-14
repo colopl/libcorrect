@@ -24,7 +24,7 @@ void bit_writer_destroy(bit_writer_t *w) {
 }
 
 void bit_writer_write(bit_writer_t *w, uint8_t val, unsigned int n) {
-    for (size_t j = 0; j < n; j++) {
+    for (unsigned int j = 0; j < n; j++) {
         bit_writer_write_1(w, val);
         val >>= 1;
     }
@@ -53,7 +53,7 @@ void bit_writer_write_bitlist(bit_writer_t *w, uint8_t *l, size_t len) {
 
     uint16_t b = w->current_byte;
 
-    for (ptrdiff_t i = 0; i < close_len; i++) {
+    for (size_t i = 0; i < close_len; i++) {
         b |= l[i];
         b <<= 1;
     }
@@ -66,20 +66,20 @@ void bit_writer_write_bitlist(bit_writer_t *w, uint8_t *l, size_t len) {
 
     if (w->current_byte_len + close_len == 8) {
         b >>= 1;
-        bytes[byte_index] = b;
+        bytes[byte_index] = (uint8_t)(b & 0xFF);
         byte_index++;
     } else {
-        w->current_byte = b;
-        w->current_byte_len += close_len;
+        w->current_byte = (uint8_t)(b & 0xFF);
+        w->current_byte_len += (unsigned int)close_len;
         return;
     }
 
     size_t full_bytes = len/8;
 
     for (size_t i = 0; i < full_bytes; i++) {
-        bytes[byte_index] = l[0] << 7 | l[1] << 6 | l[2] << 5 |
-                            l[3] << 4 | l[4] << 3 | l[5] << 2 |
-                            l[6] << 1 | l[7];
+        bytes[byte_index] = (uint8_t)((l[0] << 7) | (l[1] << 6) | (l[2] << 5) |
+                            (l[3] << 4) | (l[4] << 3) | (l[5] << 2) |
+                            (l[6] << 1) | l[7]);
         byte_index += 1;
         l += 8;
     }
@@ -87,14 +87,14 @@ void bit_writer_write_bitlist(bit_writer_t *w, uint8_t *l, size_t len) {
     len -= 8*full_bytes;
 
     b = 0;
-    for (ptrdiff_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         b |= l[i];
         b <<= 1;
     }
 
-    w->current_byte = b;
+    w->current_byte = (uint8_t)(b & 0xFF);
     w->byte_index = byte_index;
-    w->current_byte_len = len;
+    w->current_byte_len = (unsigned int)len;
 }
 
 void bit_writer_write_bitlist_reversed(bit_writer_t *w, uint8_t *l, size_t len) {
@@ -110,7 +110,7 @@ void bit_writer_write_bitlist_reversed(bit_writer_t *w, uint8_t *l, size_t len) 
 
         b = w->current_byte;
 
-        for (ptrdiff_t i = 0; i < close_len; i++) {
+        for (size_t i = 0; i < close_len; i++) {
             b |= *l;
             b <<= 1;
             l--;
@@ -120,11 +120,11 @@ void bit_writer_write_bitlist_reversed(bit_writer_t *w, uint8_t *l, size_t len) 
 
         if (w->current_byte_len + close_len == 8) {
             b >>= 1;
-            bytes[byte_index] = b;
+            bytes[byte_index] = (uint8_t)(b & 0xFF);
             byte_index++;
         } else {
-            w->current_byte = b;
-            w->current_byte_len += close_len;
+            w->current_byte = (uint8_t)(b & 0xFF);
+            w->current_byte_len += (unsigned int)close_len;
             return;
         }
     }
@@ -132,9 +132,9 @@ void bit_writer_write_bitlist_reversed(bit_writer_t *w, uint8_t *l, size_t len) 
     size_t full_bytes = len/8;
 
     for (size_t i = 0; i < full_bytes; i++) {
-        bytes[byte_index] = l[0] << 7 | l[-1] << 6 | l[-2] << 5 |
-                            l[-3] << 4 | l[-4] << 3 | l[-5] << 2 |
-                            l[-6] << 1 | l[-7];
+        bytes[byte_index] = (uint8_t)((l[0] << 7) | (l[-1] << 6) | (l[-2] << 5) |
+                            (l[-3] << 4) | (l[-4] << 3) | (l[-5] << 2) |
+                            (l[-6] << 1) | l[-7]);
         byte_index += 1;
         l -= 8;
     }
@@ -142,7 +142,7 @@ void bit_writer_write_bitlist_reversed(bit_writer_t *w, uint8_t *l, size_t len) 
     len -= 8*full_bytes;
 
     b = 0;
-    for (ptrdiff_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         b |= *l;
         b <<= 1;
         l--;
@@ -150,7 +150,7 @@ void bit_writer_write_bitlist_reversed(bit_writer_t *w, uint8_t *l, size_t len) 
 
     w->current_byte = (uint8_t)b;
     w->byte_index = byte_index;
-    w->current_byte_len = len;
+    w->current_byte_len = (len > UINT_MAX) ? UINT_MAX : (unsigned int)len;
 }
 
 void bit_writer_flush_byte(bit_writer_t *w) {
@@ -167,16 +167,16 @@ size_t bit_writer_length(bit_writer_t *w) {
 }
 
 uint8_t reverse_byte(uint8_t b) {
-    return (b & 0x80) >> 7 | (b & 0x40) >> 5 | (b & 0x20) >> 3 |
-           (b & 0x10) >> 1 | (b & 0x08) << 1 | (b & 0x04) << 3 |
-           (b & 0x02) << 5 | (b & 0x01) << 7;
+    return (uint8_t)(((b & 0x80) >> 7) | ((b & 0x40) >> 5) | ((b & 0x20) >> 3) |
+           ((b & 0x10) >> 1) | ((b & 0x08) << 1) | ((b & 0x04) << 3) |
+           ((b & 0x02) << 5) | ((b & 0x01) << 7));
 }
 
 static uint8_t reverse_table[256];
 
 void create_reverse_table(void) {
-    for (uint16_t i = 0; i < 256; i++) {
-        reverse_table[i] = reverse_byte(i);
+    for (size_t i = 0; i < 256; i++) {
+        reverse_table[i] = reverse_byte((uint8_t)i);
     }
 }
 
@@ -210,12 +210,12 @@ void bit_reader_destroy(bit_reader_t *r) {
     free(r);
 }
 
-uint8_t bit_reader_read(bit_reader_t *r, unsigned int n) {
+uint8_t bit_reader_read(bit_reader_t *r, size_t n) {
     unsigned int read = 0;
-    unsigned int n_copy = n;
+    size_t n_copy = n;
 
     if (r->current_byte_len < n) {
-        read = r->current_byte & ((1 << r->current_byte_len) - 1);
+        read = r->current_byte & ((1U << r->current_byte_len) - 1);
         r->byte_index++;
         r->current_byte = r->bytes[r->byte_index];
         n -= r->current_byte_len;
@@ -223,9 +223,9 @@ uint8_t bit_reader_read(bit_reader_t *r, unsigned int n) {
         read <<= n;
     }
 
-    uint8_t copy_mask = (1 << n) - 1;
-    copy_mask <<= (r->current_byte_len - n);
+    uint8_t copy_mask = (uint8_t)((1U << n) - 1);
+    copy_mask = (uint8_t)(copy_mask << (r->current_byte_len - n));
     read |= (r->current_byte & copy_mask) >> (r->current_byte_len - n);
     r->current_byte_len -= n;
-    return reverse_table[read] >> (8 - n_copy);
+    return (uint8_t)(reverse_table[read] >> (8 - n_copy));
 }

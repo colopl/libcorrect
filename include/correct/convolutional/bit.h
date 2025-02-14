@@ -40,5 +40,5 @@ void bit_reader_reconfigure(bit_reader_t *r, const uint8_t *bytes, size_t len);
 
 void bit_reader_destroy(bit_reader_t *r);
 
-uint8_t bit_reader_read(bit_reader_t *r, unsigned int n);
+uint8_t bit_reader_read(bit_reader_t *r, size_t n);
 #endif

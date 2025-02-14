@@ -4,7 +4,7 @@ void fill_table(unsigned int rate,
                 unsigned int order,
                 const polynomial_t *poly,
                 unsigned int *table) {
-    uint64_t table_size = 1UL << order;
+    uint64_t table_size = 1ULL << order;
     for (shift_register_t i = 0; i < table_size; i++) {
         unsigned int out = 0;
         unsigned int mask = 1;
@@ -21,10 +21,10 @@ pair_lookup_t pair_lookup_create(unsigned int rate,
                                 const unsigned int *table) {
     pair_lookup_t pairs;
 
-    uint64_t pairs_size = 1UL << (order - 1);
+    uint64_t pairs_size = 1ULL << (order - 1);
     pairs.keys = malloc(sizeof(unsigned int) * pairs_size);
     pairs.outputs = calloc((size_t)pairs_size + 1, sizeof(unsigned int));
-    unsigned int *inv_outputs = calloc(1U << (rate * 2), sizeof(unsigned int));
+    unsigned int *inv_outputs = (unsigned int *)calloc((size_t)1 << (rate * 2), sizeof(unsigned int));
     unsigned int output_counter = 1;
 
     for (uint64_t i = 0; i < pairs_size; i++) {

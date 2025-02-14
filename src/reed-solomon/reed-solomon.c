@@ -2,7 +2,7 @@
 
 // coeff must be of size nroots + 1
 // e.g. 2 roots (x + alpha)(x + alpha^2) yields a poly with 3 terms x^2 + g0*x + g1
-static polynomial_t *reed_solomon_build_generator(field_t *field, unsigned int nroots, field_element_t first_consecutive_root, unsigned int root_gap, polynomial_t *generator, field_element_t *roots) {
+static polynomial_t *reed_solomon_build_generator(field_t *field, unsigned int nroots, field_element_t first_consecutive_root, unsigned int root_gap, field_element_t *roots) {
     // generator has order 2*t
     // of form (x + alpha^1)(x + alpha^2)...(x - alpha^2*t)
     for (unsigned int i = 0; i < nroots; i++) {
@@ -25,7 +25,7 @@ correct_reed_solomon *correct_reed_solomon_create(field_operation_t primitive_po
 
     rs->generator_roots = malloc(rs->min_distance * sizeof(field_element_t));
 
-    rs->generator = reed_solomon_build_generator(rs->field, (unsigned int)rs->min_distance, rs->first_consecutive_root, rs->generator_root_gap, rs->generator, rs->generator_roots);
+    rs->generator = reed_solomon_build_generator(rs->field, (unsigned int)rs->min_distance, rs->first_consecutive_root, rs->generator_root_gap, rs->generator_roots);
 
     rs->encoded_polynomial = polynomial_create((unsigned int)(rs->block_length - 1));
     rs->encoded_remainder = polynomial_create((unsigned int)(rs->block_length - 1));

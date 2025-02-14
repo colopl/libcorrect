@@ -18,9 +18,9 @@ correct_convolutional *_correct_convolutional_init(correct_convolutional *conv,
 
     conv->order = order;
     conv->rate = rate;
-    conv->numstates = 1 << order;
+    conv->numstates = 1ULL << order;
 
-    unsigned int *table = malloc(sizeof(unsigned int) * (1 << order));
+    unsigned int *table = malloc(sizeof(unsigned int) * (1ULL << order));
     fill_table((unsigned int)conv->rate, (unsigned int)conv->order, poly, table);
     conv->table = table;
 
