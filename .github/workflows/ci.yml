@@ -34,7 +34,6 @@ jobs:
       - name: Build and test on container
         run: |
           docker run --rm --platform=${{ matrix.platform }} -i ci
-
   macOS:
     strategy:
       matrix:
