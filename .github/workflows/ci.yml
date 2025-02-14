@@ -15,11 +15,11 @@ jobs:
     strategy:
       matrix:
         runs-on: ['ubuntu-24.04-arm', 'ubuntu-24.04']
-        platform: ['linux/arm64', 'linux/i386', 'linux/amd64']
+        platform: ['linux/arm/v8', 'linux/i386', 'linux/amd64']
         image: ['debian:bookworm', 'alpine:3.21']
         exclude:
           - runs-on: 'ubuntu-24.04'
-            platform: 'linux/arm64'
+            platform: 'linux/arm/v8'
           - runs-on: 'ubuntu-24.04-arm'
             platform: 'linux/i386'
           - runs-on: 'ubuntu-24.04-arm'
