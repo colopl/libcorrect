@@ -478,6 +478,10 @@ ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, cons
     reed_solomon_find_modified_syndromes(rs, rs->syndromes, rs->erasure_locator, rs->modified_syndromes);
 
     field_element_t *syndrome_copy = malloc(rs->min_distance * sizeof(field_element_t));
+    if (!syndrome_copy) {
+        return -1;
+    }
+
     memcpy(syndrome_copy, rs->syndromes, rs->min_distance * sizeof(field_element_t));
 
     for (size_t i = erasure_length; i < rs->min_distance; i++) {
@@ -512,6 +516,11 @@ ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, cons
     }
 
     polynomial_t *temp_poly = polynomial_create(rs->error_locator->order + (unsigned int)erasure_length);
+    if (!temp_poly) {
+        free(syndrome_copy);
+        return -1;
+    }
+    
     polynomial_mul(rs->field, rs->erasure_locator, rs->error_locator, temp_poly);
     polynomial_t *placeholder_poly = rs->error_locator;
     rs->error_locator = temp_poly;

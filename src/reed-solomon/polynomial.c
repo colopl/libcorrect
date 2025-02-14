@@ -1,8 +1,23 @@
 #include "correct/reed-solomon/polynomial.h"
 
-static inline void polynomial_init(polynomial_t *poly, unsigned int order) {
+static inline bool polynomial_init(polynomial_t *poly, unsigned int order) {
     poly->coeff = malloc(sizeof(field_element_t) * (order + 1));
+    if (!poly->coeff) {
+        return false;
+    }
+
     poly->order = order;
+    return true;
+}
+
+void polynomial_destroy(polynomial_t *polynomial) {
+    if (polynomial) {
+        if (polynomial->coeff) {
+            free(polynomial->coeff);
+        }
+
+        free(polynomial);
+    }
 }
 
 polynomial_t *polynomial_create(unsigned int order) {
@@ -12,14 +27,12 @@ polynomial_t *polynomial_create(unsigned int order) {
         return NULL;
     }
 
-    polynomial_init(poly, order);
+    if (!polynomial_init(poly, order)) {
+        polynomial_destroy(poly);
+        return NULL;
+    }
 
     return poly;
-}
-
-void polynomial_destroy(polynomial_t *polynomial) {
-    free(polynomial->coeff);
-    free(polynomial);
 }
 
 // if you want a full multiplication, then make res.order = l.order + r.order
@@ -223,16 +236,32 @@ polynomial_t *polynomial_init_from_roots(field_t *field, unsigned int nroots, fi
 }
 
 polynomial_t *polynomial_create_from_roots(field_t *field, unsigned int nroots, field_element_t *roots) {
+    polynomial_t *r[2] = {0};
+
     polynomial_t *poly = polynomial_create(nroots);
+    if (!poly) {
+        return NULL;
+    }
+
     unsigned int order = nroots;
     polynomial_t *l = polynomial_create(1);
+    if (!l) {
+        goto bailout;
+    }
 
-    polynomial_t *r[2];
     // we'll keep two temporary stores of rightside polynomial
     // each time through the loop, we take the previous result and use it as new rightside
     // swap back and forth (prevents the need for a copy)
     r[0] = polynomial_create(order);
+    if (!r[0]) {
+        goto bailout;
+    }
+
     r[1] = polynomial_create(order);
+    if (!r[1]) {
+        goto bailout;
+    }
+
     unsigned int rcoeffres = 0;
 
     // initialize the result with x + roots[0]
@@ -262,4 +291,23 @@ polynomial_t *polynomial_create_from_roots(field_t *field, unsigned int nroots, 
     polynomial_destroy(r[1]);
 
     return poly;
+
+    bailout:
+        if (poly) {
+            polynomial_destroy(poly);
+        }
+
+        if (l) {
+            polynomial_destroy(l);
+        }
+
+        if (r[0]) {
+            polynomial_destroy(r[0]);
+        }
+
+        if (r[1]) {
+            polynomial_destroy(r[1]);
+        }
+
+        return NULL;
 }
