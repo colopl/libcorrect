@@ -1,5 +1,6 @@
-#ifndef CORRECT_CONVOLUTIONAL_H
-#define CORRECT_CONVOLUTIONAL_H
+#ifndef CORRECT_CONVOLUTIONAL_CONVOLUTIONAL_H
+#define CORRECT_CONVOLUTIONAL_CONVOLUTIONAL_H
+
 #include "correct/convolutional.h"
 #include "correct/convolutional/bit.h"
 #include "correct/convolutional/metric.h"
@@ -8,7 +9,7 @@
 #include "correct/convolutional/error_buffer.h"
 
 struct correct_convolutional {
-    unsigned int *table;  // size 2**order
+    unsigned int *table;        // size 2**order
     size_t rate;                // e.g. 2, 3...
     size_t order;               // e.g. 7, 9...
     unsigned int numstates;     // 2**order
@@ -36,5 +37,5 @@ void convolutional_decode_inner(correct_convolutional *conv, unsigned int sets,
                                 const uint8_t *soft);
 void convolutional_decode_tail(correct_convolutional *conv, unsigned int sets,
                                const uint8_t *soft);
-#endif
 
+#endif  /* CORRECT_CONVOLUTIONAL_CONVOLUTIONAL_H */

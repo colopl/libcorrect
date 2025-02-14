@@ -1,5 +1,6 @@
 #ifndef CORRECT_H
 #define CORRECT_H
+
 #include <stdint.h>
 
 #ifndef _MSC_VER
@@ -12,8 +13,6 @@
 #include <stddef.h>
 typedef ptrdiff_t ssize_t;
 #endif
-
-
 
 // Convolutional Codes
 
@@ -277,5 +276,4 @@ ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, cons
  */
 void correct_reed_solomon_destroy(correct_reed_solomon *rs);
 
-#endif
-
+#endif  /* CORRECT_H */

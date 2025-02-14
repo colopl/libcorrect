@@ -34,4 +34,4 @@ static inline distance_t metric_soft_distance_linear(unsigned int hard_x, const 
 
 distance_t metric_soft_distance_quadratic(unsigned int hard_x, const uint8_t *soft_y, size_t len);
 
-#endif // CORRECT_CONVOLUTIONAL_METRIC_H
+#endif  /* CORRECT_CONVOLUTIONAL_METRIC_H */

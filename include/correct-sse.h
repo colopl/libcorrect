@@ -1,5 +1,6 @@
 #ifndef CORRECT_SSE_H
 #define CORRECT_SSE_H
+
 #include <correct.h>
 
 struct correct_convolutional_sse;
@@ -27,4 +28,4 @@ ssize_t correct_convolutional_sse_decode_soft(correct_convolutional_sse *conv,
                                               const correct_convolutional_soft_t *encoded,
                                               size_t num_encoded_bits, uint8_t *msg);
 
-#endif
+#endif  /* CORRECT_SSE_H */

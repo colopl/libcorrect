@@ -1,5 +1,6 @@
-#ifndef CORRECT_FEC_H
-#define CORRECT_FEC_H
+#ifndef CORRECT_FEC_SHIM_H
+#define CORRECT_FEC_SHIM_H
+
 // libcorrect's libfec shim header
 // this is a partial implementation of libfec
 // header signatures derived from found usages of libfec -- some things may be different
@@ -71,4 +72,4 @@ static inline int parity(unsigned int x) {
     return (0x6996 >> x) & 1;
 }
 
-#endif
+#endif  /* CORRECT_FEC_SHIM_H */

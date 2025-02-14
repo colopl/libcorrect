@@ -1,3 +1,6 @@
+#ifndef CORRECT_CONVOLUTIONAL_HISTORY_BUFFER_H
+#define CORRECT_CONVOLUTIONAL_HISTORY_BUFFER_H
+
 #include "correct/convolutional.h"
 #include "correct/convolutional/bit.h"
 
@@ -57,3 +60,5 @@ void history_buffer_process_skip(history_buffer *buf, distance_t *distances,
 void history_buffer_process(history_buffer *buf, distance_t *distances,
                             bit_writer_t *output);
 void history_buffer_flush(history_buffer *buf, bit_writer_t *output);
+
+#endif  /* CORRECT_CONVOLUTIONAL_HISTORY_BUFFER_H */

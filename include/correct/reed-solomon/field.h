@@ -1,5 +1,6 @@
-#ifndef CORRECT_REED_SOLOMON_FIELD
-#define CORRECT_REED_SOLOMON_FIELD
+#ifndef CORRECT_REED_SOLOMON_FIELD_H
+#define CORRECT_REED_SOLOMON_FIELD_H
+
 #include "correct/reed-solomon.h"
 
 /*
@@ -163,4 +164,5 @@ static inline field_element_t field_pow(field_t *field, field_element_t elem, in
     }
     return field->exp[mod];
 }
-#endif
+
+#endif  /* CORRECT_REED_SOLOMON_FIELD_H */

@@ -1,5 +1,6 @@
-#ifndef CORRECT_CONVOLUTIONAL_BIT
-#define CORRECT_CONVOLUTIONAL_BIT
+#ifndef CORRECT_CONVOLUTIONAL_BIT_H
+#define CORRECT_CONVOLUTIONAL_BIT_H
+
 #include "correct/convolutional.h"
 
 typedef struct {
@@ -41,4 +42,4 @@ void bit_reader_reconfigure(bit_reader_t *r, const uint8_t *bytes, size_t len);
 void bit_reader_destroy(bit_reader_t *r);
 
 uint8_t bit_reader_read(bit_reader_t *r, size_t n);
-#endif
+#endif  /* CORRECT_CONVOLUTIONAL_BIT_H */

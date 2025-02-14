@@ -29,4 +29,4 @@ static inline void prefetch(const void *x)
 }
 #endif
 
-#endif // CORRECT_PORTABLE_H
+#endif  /* CORRECT_PORTABLE_H */

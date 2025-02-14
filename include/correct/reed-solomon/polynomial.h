@@ -1,3 +1,6 @@
+#ifndef CORRECT_REED_SOLOMON_POLYNOMIAL_H
+#define CORRECT_REED_SOLOMON_POLYNOMIAL_H
+
 #include "correct/reed-solomon.h"
 #include "correct/reed-solomon/field.h"
 
@@ -12,3 +15,5 @@ field_element_t polynomial_eval_log_lut(field_t *field, polynomial_t *poly_log, 
 void polynomial_build_exp_lut(field_t *field, field_element_t val, unsigned int order, field_logarithm_t *val_exp);
 polynomial_t *polynomial_init_from_roots(field_t *field, unsigned int nroots, field_element_t *roots, polynomial_t *poly, polynomial_t **scratch);
 polynomial_t *polynomial_create_from_roots(field_t *field, unsigned int nroots, field_element_t *roots);
+
+#endif  /* CORRECT_REED_SOLOMON_POLYNOMIAL_H */

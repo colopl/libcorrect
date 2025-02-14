@@ -1,5 +1,6 @@
-#ifndef CORRECT_REED_SOLOMON
-#define CORRECT_REED_SOLOMON
+#ifndef CORRECT_REED_SOLOMON_H
+#define CORRECT_REED_SOLOMON_H
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -73,4 +74,5 @@ struct correct_reed_solomon {
     bool has_init_decode;
 
 };
-#endif
+
+#endif  /* CORRECT_REED_SOLOMON_H */
