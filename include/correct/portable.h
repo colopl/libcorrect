@@ -29,4 +29,22 @@ static inline void prefetch(const void *x)
 }
 #endif
 
+#ifdef _MSC_VER
+#define ALIGNED_MALLOC(size, alignment) _aligned_malloc(size, alignment)
+#define ALIGNED_FREE _aligned_free
+#else
+#include <stdlib.h>
+static inline void* aligned_malloc(size_t size, size_t alignment) {
+    void *ptr;
+
+    if (posix_memalign(&ptr, alignment, size) == 0) {
+        return ptr;
+    }
+
+    return NULL;
+}
+#define ALIGNED_MALLOC(size, alignment) aligned_malloc(size, alignment)
+#define ALIGNED_FREE free
+#endif
+
 #endif  /* CORRECT_PORTABLE_H */

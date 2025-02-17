@@ -1,4 +1,7 @@
+#include "correct/portable.h"
 #include "correct/convolutional/sse/lookup.h"
+
+#include <stdlib.h>
 
 distance_oct_key_t oct_lookup_find_key(output_oct_t *outputs, output_oct_t out, size_t num_keys) {
     for (size_t i = 1; i < num_keys; i++) {
@@ -16,7 +19,7 @@ void oct_lookup_destroy(oct_lookup_t *octs) {
         }
 
         if (octs->outputs) {
-            free(octs->outputs);
+            ALIGNED_FREE(octs->outputs);
         }
 
         if (octs->distances) {
@@ -27,9 +30,8 @@ void oct_lookup_destroy(oct_lookup_t *octs) {
     }
 }
 
-oct_lookup_t *oct_lookup_create(unsigned int rate,
-                                 unsigned int order,
-                                 const unsigned int *table) {
+oct_lookup_t *oct_lookup_create(unsigned int rate, unsigned int order, const unsigned int *table) {
+    size_t outputs_size = ((output_oct_t)2 << rate) * sizeof(uint64_t);
     oct_lookup_t *octs = calloc(1, sizeof(oct_lookup_t));
     if (!octs) {
         return NULL;
@@ -41,7 +43,7 @@ oct_lookup_t *oct_lookup_create(unsigned int rate,
         return NULL;
     }
 
-    octs->outputs = (output_oct_t *)malloc(((output_oct_t)2 << rate) * sizeof(uint64_t));
+    octs->outputs = (output_oct_t *)ALIGNED_MALLOC(outputs_size, 16);
     if (!octs->outputs) {
         oct_lookup_destroy(octs);
         return NULL;
