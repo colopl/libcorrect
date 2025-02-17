@@ -15,17 +15,17 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
         // shiftregister for the previous time slice
         if (soft) {
             if (conv->soft_measurement == CORRECT_SOFT_LINEAR) {
-                for (unsigned int j = 0; j < 1 << (conv->rate); j++) {
+                for (unsigned int j = 0; j < 1 << (unsigned int)(conv->rate); j++) {
                     distances[j] = metric_soft_distance_linear(j, soft + i * conv->rate, conv->rate);
                 }
             } else {
-                for (unsigned int j = 0; j < 1 << (conv->rate); j++) {
+                for (unsigned int j = 0; j < 1 << (unsigned int)(conv->rate); j++) {
                     distances[j] = metric_soft_distance_quadratic(j, soft + i * conv->rate, conv->rate);
                 }
             }
         } else {
             unsigned int out = bit_reader_read(conv->bit_reader, conv->rate);
-            for (unsigned int i = 0; i < 1 << (conv->rate); i++) {
+            for (i = 0; i < 1 << (unsigned int)(conv->rate); i++) {
                 distances[i] = metric_distance(i, out);
             }
         }
@@ -264,7 +264,7 @@ static ssize_t _convolutional_sse_decode(correct_convolutional_sse *sse_conv, si
         uint64_t max_error_per_input = conv->rate * soft_max;
         // sse implementation unfortunately uses signed math on our unsigned values
         // reduces usable distance by /2
-        unsigned int renormalize_interval = (distance_max / 2) / max_error_per_input;
+        unsigned int renormalize_interval = (distance_max / 2) / (unsigned int)max_error_per_input;
         if(!_convolutional_sse_decode_init(sse_conv, 5 * conv->order, 100 * conv->order, renormalize_interval)) {
             return -1;
         }
