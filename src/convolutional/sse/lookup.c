@@ -3,7 +3,7 @@
 distance_oct_key_t oct_lookup_find_key(output_oct_t *outputs, output_oct_t out, size_t num_keys) {
     for (size_t i = 1; i < num_keys; i++) {
         if (outputs[i] == out) {
-            return i;
+            return (distance_oct_key_t)i;
         }
     }
     return 0;
@@ -54,7 +54,7 @@ oct_lookup_t *oct_lookup_create(unsigned int rate,
     //   and the subsequent state that follows it (low bit set). then, check to see if this
     //   concatenated output has a unique key assigned to it already. if not, give it a key.
     //   if it does, retrieve the key. assign this key to the shift register state.
-    for (shift_register_t i = 0; i < (1 << (order - 3)); i++) {
+    for (shift_register_t i = 0; i < (unsigned int)(1 << (order - 3)); i++) {
         // first get the concatenated oct of outputs
         output_oct_t out = table[i * 8 + 7];
         out <<= rate;
@@ -110,7 +110,7 @@ oct_lookup_t *oct_lookup_create(unsigned int rate,
             }
             short_outs[output_counter] = out;
             octs->outputs[output_counter] = expanded_out;
-            key = output_counter;
+            key = (distance_oct_key_t)output_counter;
             output_counter++;
         }
         // set the opaque key for the ith shift register state to the concatenated output entry

@@ -15,17 +15,15 @@ void convolutional_decode_warmup(correct_convolutional *conv, unsigned int sets,
         const distance_t *read_errors = conv->errors->read_errors;
         distance_t *write_errors = conv->errors->write_errors;
         // walk all of the state we have so far
-        for (size_t j = 0; j < ((size_t)1u << (i + 1)); j += 1) {
+        for (size_t j = 0; j < (size_t)((size_t)1u << (i + 1)); j += 1) {
             size_t last = j >> 1;
             distance_t dist;
 
             if (soft) {
                 if (conv->soft_measurement == CORRECT_SOFT_LINEAR) {
-                    dist = metric_soft_distance_linear(conv->table[j], soft + i * conv->rate,
-                                                       conv->rate);
+                    dist = metric_soft_distance_linear(conv->table[j], soft + i * conv->rate, conv->rate);
                 } else {
-                    dist = metric_soft_distance_quadratic(conv->table[j], soft + i * conv->rate,
-                                                          conv->rate);
+                    dist = metric_soft_distance_quadratic(conv->table[j], soft + i * conv->rate, conv->rate);
                 }
             } else {
                 dist = metric_distance((unsigned int)conv->table[j], out);
