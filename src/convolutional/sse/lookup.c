@@ -35,7 +35,7 @@ oct_lookup_t *oct_lookup_create(unsigned int rate,
         return NULL;
     }
 
-    octs->keys = (distance_oct_key_t *)malloc((1 << (order - 3)) * sizeof(distance_oct_key_t));
+    octs->keys = (distance_oct_key_t *)malloc((unsigned int)(1 << (order - 3)) * sizeof(distance_oct_key_t));
     if (!octs->keys) {
         oct_lookup_destroy(octs);
         return NULL;

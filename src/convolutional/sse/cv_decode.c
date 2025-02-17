@@ -9,17 +9,17 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
     unsigned int hist_buf_rn_int = conv->history_buffer->renormalize_interval;
     unsigned int hist_buf_rn_cnt = conv->history_buffer->renormalize_counter;
 
-    for (unsigned int i = conv->order - 1; i < (sets - conv->order + 1); i++) {
+    for (unsigned int i = (unsigned int)conv->order - 1; i < (sets - conv->order + 1); i++) {
         distance_t *distances = conv->distances;
         // lasterrors are the aggregate bit errors for the states of
         // shiftregister for the previous time slice
         if (soft) {
             if (conv->soft_measurement == CORRECT_SOFT_LINEAR) {
-                for (unsigned int j = 0; j < 1 << (unsigned int)(conv->rate); j++) {
+                for (unsigned int j = 0; j < (unsigned int)(1 << (conv->rate)); j++) {
                     distances[j] = metric_soft_distance_linear(j, soft + i * conv->rate, conv->rate);
                 }
             } else {
-                for (unsigned int j = 0; j < 1 << (unsigned int)(conv->rate); j++) {
+                for (unsigned int j = 0; j < (unsigned int)(1 << (conv->rate)); j++) {
                     distances[j] = metric_soft_distance_quadratic(j, soft + i * conv->rate, conv->rate);
                 }
             }
@@ -253,7 +253,7 @@ static bool _convolutional_sse_decode_init(correct_convolutional_sse *conv, unsi
         return false;
     }
     
-    conv->oct_lookup = oct_lookup_create(conv->base_conv.rate, conv->base_conv.order, conv->base_conv.table);
+    conv->oct_lookup = oct_lookup_create((unsigned int)conv->base_conv.rate, (unsigned int)conv->base_conv.order, (unsigned int *)conv->base_conv.table);
 
     return true;
 }
@@ -265,7 +265,7 @@ static ssize_t _convolutional_sse_decode(correct_convolutional_sse *sse_conv, si
         // sse implementation unfortunately uses signed math on our unsigned values
         // reduces usable distance by /2
         unsigned int renormalize_interval = (distance_max / 2) / (unsigned int)max_error_per_input;
-        if(!_convolutional_sse_decode_init(sse_conv, 5 * conv->order, 100 * conv->order, renormalize_interval)) {
+        if(!_convolutional_sse_decode_init(sse_conv, (unsigned int)(5 * conv->order), (unsigned int)(100 * conv->order), renormalize_interval)) {
             return -1;
         }
     }
@@ -279,9 +279,9 @@ static ssize_t _convolutional_sse_decode(correct_convolutional_sse *sse_conv, si
     history_buffer_reset(conv->history_buffer);
 
     // no outputs are generated during warmup
-    convolutional_decode_warmup(conv, sets, soft_encoded);
-    convolutional_sse_decode_inner(sse_conv, sets, soft_encoded);
-    convolutional_decode_tail(conv, sets, soft_encoded);
+    convolutional_decode_warmup(conv, (unsigned int)sets, soft_encoded);
+    convolutional_sse_decode_inner(sse_conv, (unsigned int)sets, soft_encoded);
+    convolutional_decode_tail(conv, (unsigned int)sets, soft_encoded);
 
     history_buffer_flush(conv->history_buffer, conv->bit_writer);
 
