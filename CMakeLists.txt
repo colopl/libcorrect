@@ -61,19 +61,36 @@ check_library_exists(FEC dotprod "" HAVE_LIBFEC)
 if(NOT CMAKE_CROSSCOMPILING)
     cmake_push_check_state(RESET)
     set(CMAKE_REQUIRED_DEFINITIONS -march=native)
+
     check_c_source_compiles("
-        #include <x86intrin.h>
+        #if defined(_MSC_VER)
+            #include <intrin.h>
+        #else
+            #include <x86intrin.h>
+        #endif
+        
         int main(void) {
-            __m128i a;
-            __m128i b;
-            __m128i c = _mm_min_epu16(a, b);
+            #if defined(_MSC_VER)
+                __m128i a = _mm_setzero_si128();
+                __m128i b = _mm_setzero_si128();
+                __m128i c = _mm_min_epu16(a, b);
+            #else
+                __m128i a;
+                __m128i b;
+                __m128i c = _mm_min_epu16(a, b);
+            #endif
             return 0;
         }" HAVE_SSE)
+
     cmake_pop_check_state()
 endif()
 
 if(HAVE_SSE)
-    add_compile_options(-msse4.1)
+    if(MSVC)
+        add_compile_definitions(__SSE4_1__)
+    else()
+        add_compile_options(-msse4.1)
+    endif()
 endif()
 
 # Build settings
