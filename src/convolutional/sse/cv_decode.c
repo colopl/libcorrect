@@ -25,7 +25,7 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
             }
         } else {
             unsigned int out = bit_reader_read(conv->bit_reader, conv->rate);
-            for (i = 0; i < 1 << (unsigned int)(conv->rate); i++) {
+            for (i = 0; i < (unsigned int)(1 << conv->rate); i++) {
                 distances[i] = metric_distance(i, out);
             }
         }
