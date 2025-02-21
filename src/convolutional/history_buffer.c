@@ -1,7 +1,32 @@
 #include "correct/convolutional/history_buffer.h"
 
+void history_buffer_destroy(history_buffer *buf) {
+    if (!buf) {
+        return;
+    }
+
+    for (unsigned int i = 0; i < buf->cap; i++) {
+        if (buf->history[i]) {
+            free(buf->history[i]);
+        }
+    }
+
+    if (buf->history) {
+        free(buf->history);
+    }
+
+    if (buf->fetched) {
+        free(buf->fetched);
+    }
+
+    free(buf);
+}
+
 history_buffer *history_buffer_create(unsigned int min_traceback_length, unsigned int traceback_group_length, unsigned int renormalize_interval, unsigned int num_states, shift_register_t highbit) {
     history_buffer *buf = (history_buffer *)calloc(1, sizeof(history_buffer));
+    if (!buf) {
+        return NULL;
+    }
 
     buf->min_traceback_length = min_traceback_length;
     buf->traceback_group_length = traceback_group_length;
@@ -10,10 +35,28 @@ history_buffer *history_buffer_create(unsigned int min_traceback_length, unsigne
     buf->highbit = highbit;
 
     buf->history = (uint8_t **)malloc(buf->cap * sizeof(uint8_t *));
+    if (!buf->history) {
+        history_buffer_destroy(buf);
+        return NULL;
+    }
+
     for (unsigned int i = 0; i < buf->cap; i++) {
         buf->history[i] = (uint8_t *)calloc(num_states, sizeof(uint8_t));
+        if (!buf->history[i]) {
+            for (unsigned int j = 0; j < i; j++) {
+                free(buf->history[j]);
+            }
+            free(buf->history);
+            history_buffer_destroy(buf);
+            return NULL;
+        } 
     }
+
     buf->fetched = (uint8_t *)malloc(buf->cap * sizeof(uint8_t));
+    if (!buf->fetched) {
+        history_buffer_destroy(buf);
+        return NULL;
+    }
 
     buf->index = 0;
     buf->len = 0;
@@ -22,15 +65,6 @@ history_buffer *history_buffer_create(unsigned int min_traceback_length, unsigne
     buf->renormalize_interval = renormalize_interval;
 
     return buf;
-}
-
-void history_buffer_destroy(history_buffer *buf) {
-    for (unsigned int i = 0; i < buf->cap; i++) {
-        free(buf->history[i]);
-    }
-    free(buf->history);
-    free(buf->fetched);
-    free(buf);
 }
 
 void history_buffer_reset(history_buffer *buf) {
@@ -45,6 +79,7 @@ uint8_t *history_buffer_get_slice(history_buffer *buf) {
 shift_register_t history_buffer_search(history_buffer *buf, const distance_t *distances, unsigned int search_every) {
     shift_register_t bestpath = 0;
     distance_t leasterror = USHRT_MAX;
+
     // search for a state with the least error
     for (shift_register_t state = 0; state < buf->num_states; state += search_every) {
         if (distances[state] < leasterror) {
@@ -52,6 +87,7 @@ shift_register_t history_buffer_search(history_buffer *buf, const distance_t *di
             bestpath = state;
         }
     }
+
     return bestpath;
 }
 

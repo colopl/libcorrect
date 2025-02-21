@@ -12,6 +12,10 @@ correct_convolutional_sse *correct_convolutional_sse_create(size_t rate, size_t 
 }
 
 void correct_convolutional_sse_destroy(correct_convolutional_sse *conv) {
+    if (!conv) {
+        return;
+    }
+
     if (conv->base_conv.has_init_decode) {
         oct_lookup_destroy(conv->oct_lookup);
     }

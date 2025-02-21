@@ -72,10 +72,8 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
             // low and low_plus_one share low_past_error
             //   note that they are the same when shifted right by 1
             // same goes for high and high_plus_one
-            __m128i past_shuffle_mask =
-                _mm_set_epi32(0x07060706, 0x05040504, 0x03020302, 0x01000100);
-            __m128i hist_mask =
-                _mm_set_epi32(0x80808080, 0x80808080, 0x0e0c0a09, 0x07050301);
+            __m128i past_shuffle_mask = _mm_set_epi32(0x07060706, 0x05040504, 0x03020302, 0x01000100);
+            __m128i hist_mask = _mm_set_epi32(0x80808080, 0x80808080, 0x0e0c0a09, 0x07050301);
 
             // the loop below calculates 64 register states per loop iteration
             // it does this by packing the 128-bit xmm registers with 8, 16-bit
@@ -90,14 +88,10 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
                  offset += 32, base_offset += 16) {
                 // load the past error for the register states with the high
                 // order bit cleared
-                __m128i low_past_error =
-                    _mm_loadl_epi64((const __m128i *)(read_errors + base + base_offset));
-                __m128i low_past_error0 =
-                    _mm_loadl_epi64((const __m128i *)(read_errors + base + base_offset + 4));
-                __m128i low_past_error1 =
-                    _mm_loadl_epi64((const __m128i *)(read_errors + base + base_offset + 8));
-                __m128i low_past_error2 =
-                    _mm_loadl_epi64((const __m128i *)(read_errors + base + base_offset + 12));
+                __m128i low_past_error = _mm_loadl_epi64((const __m128i *)(read_errors + base + base_offset));
+                __m128i low_past_error0 = _mm_loadl_epi64((const __m128i *)(read_errors + base + base_offset + 4));
+                __m128i low_past_error1 = _mm_loadl_epi64((const __m128i *)(read_errors + base + base_offset + 8));
+                __m128i low_past_error2 = _mm_loadl_epi64((const __m128i *)(read_errors + base + base_offset + 12));
 
                 // shuffle the low past error
                 // register states that differ only by their low order bit share
@@ -109,14 +103,10 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
 
                 // repeat past error lookup for register states with high order
                 // bit set
-                __m128i high_past_error =
-                    _mm_loadl_epi64((const __m128i *)(read_errors + highbase + base + base_offset));
-                __m128i high_past_error0 = _mm_loadl_epi64(
-                    (const __m128i *)(read_errors + highbase + base + base_offset + 4));
-                __m128i high_past_error1 = _mm_loadl_epi64(
-                    (const __m128i *)(read_errors + highbase + base + base_offset + 8));
-                __m128i high_past_error2 = _mm_loadl_epi64(
-                    (const __m128i *)(read_errors + highbase + base + base_offset + 12));
+                __m128i high_past_error = _mm_loadl_epi64((const __m128i *)(read_errors + highbase + base + base_offset));
+                __m128i high_past_error0 = _mm_loadl_epi64((const __m128i *)(read_errors + highbase + base + base_offset + 4));
+                __m128i high_past_error1 = _mm_loadl_epi64((const __m128i *)(read_errors + highbase + base + base_offset + 8));
+                __m128i high_past_error2 = _mm_loadl_epi64((const __m128i *)(read_errors + highbase + base + base_offset + 12));
 
                 high_past_error = _mm_shuffle_epi8(high_past_error, past_shuffle_mask);
                 high_past_error0 = _mm_shuffle_epi8(high_past_error0, past_shuffle_mask);
@@ -134,14 +124,10 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
 
                 // load the distances for the register states with high order
                 // bit cleared
-                __m128i low_this_error =
-                    _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key));
-                __m128i low_this_error0 =
-                    _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key0));
-                __m128i low_this_error1 =
-                    _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key1));
-                __m128i low_this_error2 =
-                    _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key2));
+                __m128i low_this_error = _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key));
+                __m128i low_this_error0 = _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key0));
+                __m128i low_this_error1 = _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key1));
+                __m128i low_this_error2 = _mm_load_si128((const __m128i *)(oct_lookup->distances + low_key2));
 
                 // add the distance for this time slice to the past distances
                 __m128i low_error = _mm_add_epi16(low_past_error, low_this_error);
@@ -151,23 +137,15 @@ static void convolutional_sse_decode_inner(correct_convolutional_sse *sse_conv, 
 
                 // repeat oct distance table lookup for registers with high
                 // order bit set
-                distance_oct_key_t high_key =
-                    oct_lookup->keys[oct_highbase + oct + (base_offset / 4)];
-                distance_oct_key_t high_key0 =
-                    oct_lookup->keys[oct_highbase + oct + (base_offset / 4) + 1];
-                distance_oct_key_t high_key1 =
-                    oct_lookup->keys[oct_highbase + oct + (base_offset / 4) + 2];
-                distance_oct_key_t high_key2 =
-                    oct_lookup->keys[oct_highbase + oct + (base_offset / 4) + 3];
+                distance_oct_key_t high_key = oct_lookup->keys[oct_highbase + oct + (base_offset / 4)];
+                distance_oct_key_t high_key0 = oct_lookup->keys[oct_highbase + oct + (base_offset / 4) + 1];
+                distance_oct_key_t high_key1 = oct_lookup->keys[oct_highbase + oct + (base_offset / 4) + 2];
+                distance_oct_key_t high_key2 = oct_lookup->keys[oct_highbase + oct + (base_offset / 4) + 3];
 
-                __m128i high_this_error =
-                    _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key));
-                __m128i high_this_error0 =
-                    _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key0));
-                __m128i high_this_error1 =
-                    _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key1));
-                __m128i high_this_error2 =
-                    _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key2));
+                __m128i high_this_error = _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key));
+                __m128i high_this_error0 = _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key0));
+                __m128i high_this_error1 = _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key1));
+                __m128i high_this_error2 = _mm_load_si128((const __m128i *)(oct_lookup->distances + high_key2));
 
                 __m128i high_error = _mm_add_epi16(high_past_error, high_this_error);
                 __m128i high_error0 = _mm_add_epi16(high_past_error0, high_this_error0);
@@ -254,6 +232,10 @@ static bool _convolutional_sse_decode_init(correct_convolutional_sse *conv, unsi
     }
     
     conv->oct_lookup = oct_lookup_create((unsigned int)conv->base_conv.rate, (unsigned int)conv->base_conv.order, (unsigned int *)conv->base_conv.table);
+    if (!conv->oct_lookup) {
+        _correct_convolutional_teardown(&conv->base_conv);
+        return false;
+    }
 
     return true;
 }
@@ -295,8 +277,7 @@ ssize_t correct_convolutional_sse_decode(correct_convolutional_sse *conv, const 
         return -1;
     }
 
-    size_t num_encoded_bytes =
-        (num_encoded_bits % 8) ? (num_encoded_bits / 8 + 1) : (num_encoded_bits / 8);
+    size_t num_encoded_bytes = (num_encoded_bits % 8) ? (num_encoded_bits / 8 + 1) : (num_encoded_bits / 8);
     bit_reader_reconfigure(conv->base_conv.bit_reader, encoded, num_encoded_bytes);
 
     return _convolutional_sse_decode(conv, num_encoded_bits, num_encoded_bytes, msg, NULL);
@@ -309,8 +290,7 @@ ssize_t correct_convolutional_sse_decode_soft(correct_convolutional_sse *conv, c
         return -1;
     }
 
-    size_t num_encoded_bytes =
-        (num_encoded_bits % 8) ? (num_encoded_bits / 8 + 1) : (num_encoded_bits / 8);
+    size_t num_encoded_bytes = (num_encoded_bits % 8) ? (num_encoded_bits / 8 + 1) : (num_encoded_bits / 8);
 
     return _convolutional_sse_decode(conv, num_encoded_bits, num_encoded_bytes, msg, encoded);
 }

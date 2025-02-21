@@ -45,8 +45,7 @@ void convolutional_decode_inner(correct_convolutional *conv, unsigned int sets, 
         if (soft) {
             if (conv->soft_measurement == CORRECT_SOFT_LINEAR) {
                 for (unsigned int j = 0; j < (unsigned int)(1u << (conv->rate)); j++) {
-                    distances[j] =
-                        metric_soft_distance_linear(j, soft + i * conv->rate, conv->rate);
+                    distances[j] = metric_soft_distance_linear(j, soft + i * conv->rate, conv->rate);
                 }
             } else {
                 for (unsigned int j = 0; j < (unsigned int)(1u << (conv->rate)); j++) {
@@ -168,13 +167,11 @@ void convolutional_decode_tail(correct_convolutional *conv, unsigned int sets, c
         if (soft) {
             if (conv->soft_measurement == CORRECT_SOFT_LINEAR) {
                 for (unsigned int j = 0; j < (unsigned int)(1u << (conv->rate)); j++) {
-                    distances[j] =
-                        metric_soft_distance_linear(j, soft + i * conv->rate, conv->rate);
+                    distances[j] = metric_soft_distance_linear(j, soft + i * conv->rate, conv->rate);
                 }
             } else {
                 for (unsigned int j = 0; j < (unsigned int)(1u << (conv->rate)); j++) {
-                    distances[j] =
-                        metric_soft_distance_quadratic(j, soft + i * conv->rate, conv->rate);
+                    distances[j] = metric_soft_distance_quadratic(j, soft + i * conv->rate, conv->rate);
                 }
             }
         } else {
@@ -232,13 +229,22 @@ bool _convolutional_decode_init(correct_convolutional *conv, unsigned int min_tr
     }
 
     conv->pair_lookup = pair_lookup_create((unsigned int)conv->rate, (unsigned int)conv->order, conv->table);
+    if (conv->pair_lookup == NULL) {
+        return false;
+    }
 
     conv->soft_measurement = CORRECT_SOFT_LINEAR;
 
     // we limit history to go back as far as 5 * the order of our polynomial
     conv->history_buffer = history_buffer_create(min_traceback, traceback_length, renormalize_interval, conv->numstates / 2, 1 << (conv->order - 1));
+    if (!conv->history_buffer) {
+        return false;
+    }
 
     conv->errors = error_buffer_create(conv->numstates);
+    if (!conv->errors) {
+        return false;
+    }
 
     return true;
 }
@@ -279,8 +285,7 @@ ssize_t correct_convolutional_decode(correct_convolutional *conv, const uint8_t 
         return -1;
     }
 
-    size_t num_encoded_bytes =
-        (num_encoded_bits % 8) ? (num_encoded_bits / 8 + 1) : (num_encoded_bits / 8);
+    size_t num_encoded_bytes = (num_encoded_bits % 8) ? (num_encoded_bits / 8 + 1) : (num_encoded_bits / 8);
     bit_reader_reconfigure(conv->bit_reader, encoded, num_encoded_bytes);
 
     return _convolutional_decode(conv, num_encoded_bits, num_encoded_bytes, msg, NULL);
@@ -293,8 +298,7 @@ ssize_t correct_convolutional_decode_soft(correct_convolutional *conv, const sof
         return -1;
     }
 
-    size_t num_encoded_bytes =
-        (num_encoded_bits % 8) ? (num_encoded_bits / 8 + 1) : (num_encoded_bits / 8);
+    size_t num_encoded_bytes = (num_encoded_bits % 8) ? (num_encoded_bits / 8 + 1) : (num_encoded_bits / 8);
 
     return _convolutional_decode(conv, num_encoded_bits, num_encoded_bytes, msg, encoded);
 }

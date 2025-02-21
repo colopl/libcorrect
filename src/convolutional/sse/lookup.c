@@ -9,6 +9,7 @@ distance_oct_key_t oct_lookup_find_key(output_oct_t *outputs, output_oct_t out, 
             return (distance_oct_key_t)i;
         }
     }
+
     return 0;
 }
 

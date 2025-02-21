@@ -1,7 +1,7 @@
 #include "correct/reed-solomon/encode.h"
 
 ssize_t correct_reed_solomon_encode(correct_reed_solomon *rs, const uint8_t *msg, size_t msg_length, uint8_t *encoded) {
-    if (msg_length > rs->message_length) {
+    if (!rs || msg_length > rs->message_length) {
         return -1;
     }
 

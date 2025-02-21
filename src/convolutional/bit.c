@@ -1,7 +1,10 @@
 #include "correct/convolutional/bit.h"
 
 bit_writer_t *bit_writer_create(uint8_t *bytes, size_t len) {
-    bit_writer_t *w = calloc(1, sizeof(bit_writer_t));
+    bit_writer_t *w = (bit_writer_t *)calloc(1, sizeof(bit_writer_t));
+    if (!w) {
+        return NULL;
+    }
 
     if (bytes) {
         bit_writer_reconfigure(w, bytes, len);
@@ -20,7 +23,9 @@ void bit_writer_reconfigure(bit_writer_t *w, uint8_t *bytes, size_t len) {
 }
 
 void bit_writer_destroy(bit_writer_t *w) {
-    free(w);
+    if (w) {
+        free(w);
+    }
 }
 
 void bit_writer_write(bit_writer_t *w, uint8_t val, unsigned int n) {
@@ -238,6 +243,9 @@ void create_reverse_table(void) {
 
 bit_reader_t *bit_reader_create(const uint8_t *bytes, size_t len) {
     bit_reader_t *r = (bit_reader_t *)calloc(1, sizeof(bit_reader_t));
+    if (!r) {
+        return NULL;
+    }
 
     static bool reverse_table_created = false;
 
@@ -263,7 +271,9 @@ void bit_reader_reconfigure(bit_reader_t *r, const uint8_t *bytes, size_t len) {
 }
 
 void bit_reader_destroy(bit_reader_t *r) {
-    free(r);
+    if (r) {
+        free(r);
+    }
 }
 
 uint8_t bit_reader_read(bit_reader_t *r, size_t n) {

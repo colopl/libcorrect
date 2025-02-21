@@ -13,30 +13,61 @@ typedef struct {
     uint8_t *erasures;
 } reed_solomon_shim;
 
+void free_rs_char(void *rs) {
+    reed_solomon_shim *shim = (reed_solomon_shim *)rs;
+
+    if (!shim) {
+        return;
+    }
+ 
+    if (shim->rs) {
+        correct_reed_solomon_destroy(shim->rs);
+    }
+
+    if (shim->msg_out) {
+        free(shim->msg_out);
+    }
+
+    if (shim->erasures) {
+        free(shim->erasures);
+    }
+    
+    free(shim);
+}
+
 void *init_rs_char(int symbol_size, int primitive_polynomial, int first_consecutive_root, int root_gap, int number_roots, unsigned int pad) {
     if (symbol_size != 8) {
         return NULL;
     }
 
     reed_solomon_shim *shim = (reed_solomon_shim *)malloc(sizeof(reed_solomon_shim));
+    if (!shim) {
+        return NULL;
+    }
 
     shim->pad = pad;
     shim->block_length = 255 - pad;
     shim->num_roots = (unsigned int)number_roots;
     shim->msg_length = shim->block_length - (unsigned int)number_roots;
     shim->rs = correct_reed_solomon_create((uint16_t)primitive_polynomial, (uint8_t)first_consecutive_root, (uint8_t)root_gap, (size_t)number_roots);
+    if (!shim->rs) {
+        free_rs_char(shim);
+        return NULL;        
+    }
+
     shim->msg_out = (uint8_t *)malloc(shim->block_length);
+    if (!shim->msg_out) {
+        free_rs_char(shim);
+        return NULL; 
+    }
+
     shim->erasures = (uint8_t *)malloc((size_t)number_roots);
+    if (!shim->msg_out) {
+        free_rs_char(shim);
+        return NULL; 
+    }
 
     return shim;
-}
-
-void free_rs_char(void *rs) {
-    reed_solomon_shim *shim = (reed_solomon_shim *)rs;
-    correct_reed_solomon_destroy(shim->rs);
-    free(shim->msg_out);
-    free(shim->erasures);
-    free(shim);
 }
 
 void encode_rs_char(void *rs, const unsigned char *msg, unsigned char *parity) {
@@ -76,27 +107,51 @@ static correct_convolutional_polynomial_t r16k15[] = {
     V615POLYA, V615POLYB, V615POLYC, V615POLYD, V615POLYE, V615POLYF};
 
 /* Common methods */
+static void delete_viterbi(void *vit) {
+    convolutional_shim *shim = (convolutional_shim *)vit;
+
+    if (!shim) {
+        return;
+    }
+
+    if (shim->buf) {
+        free(shim->buf);
+    }
+
+    if (shim->conv) {
+        correct_convolutional_destroy(shim->conv);
+    }
+
+    free(shim);
+}
+
 static void *create_viterbi(unsigned int num_decoded_bits, unsigned int rate, unsigned int order, correct_convolutional_polynomial_t *poly) {
     convolutional_shim *shim = (convolutional_shim *)malloc(sizeof(convolutional_shim));
+    if (!shim) {
+        return NULL;
+    }
 
     size_t num_decoded_bytes = (num_decoded_bits % 8) ? (num_decoded_bits / 8 + 1) : num_decoded_bits / 8;
 
     shim->rate = rate;
     shim->order = order;
     shim->buf = (uint8_t *)malloc(num_decoded_bytes);
+    if (!shim->buf) {
+        delete_viterbi(shim);
+        return NULL;
+    }
+
     shim->buf_len = num_decoded_bytes;
     shim->conv = correct_convolutional_create(rate, order, poly);
+    if (!shim->conv) {
+        delete_viterbi(shim);
+        return NULL;
+    }
+
     shim->read_iter = shim->buf;
     shim->write_iter = shim->buf;
 
     return shim;
-}
-
-static void delete_viterbi(void *vit) {
-    convolutional_shim *shim = (convolutional_shim *)vit;
-    free(shim->buf);
-    correct_convolutional_destroy(shim->conv);
-    free(shim);
 }
 
 static void init_viterbi(void *vit) {

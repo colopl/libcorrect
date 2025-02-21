@@ -11,18 +11,19 @@ static inline bool polynomial_init(polynomial_t *poly, unsigned int order) {
 }
 
 void polynomial_destroy(polynomial_t *polynomial) {
-    if (polynomial) {
-        if (polynomial->coeff) {
-            free(polynomial->coeff);
-        }
-
-        free(polynomial);
+    if (!polynomial) {
+        return;
     }
+
+    if (polynomial->coeff) {
+        free(polynomial->coeff);
+    }
+
+    free(polynomial);
 }
 
 polynomial_t *polynomial_create(unsigned int order) {
     polynomial_t *poly = (polynomial_t *)malloc(sizeof(polynomial_t));
-
     if (!poly) {
         return NULL;
     }

@@ -145,6 +145,7 @@ correct_reed_solomon *correct_reed_solomon_create(field_operation_t primitive_po
         correct_reed_solomon_destroy(rs);
         return NULL;
     }
+
     rs->encoded_remainder = polynomial_create((unsigned int)(rs->block_length - 1));
     if (!rs->encoded_remainder) {
         correct_reed_solomon_destroy(rs);

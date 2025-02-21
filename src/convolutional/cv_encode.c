@@ -3,6 +3,7 @@
 size_t correct_convolutional_encode_len(correct_convolutional *conv, size_t msg_len) {
     size_t msgbits = 8 * msg_len;
     size_t encodedbits = conv->rate * (msgbits + conv->order + 1);
+
     return encodedbits;
 }
 
