@@ -93,6 +93,19 @@ if(HAVE_SSE)
     endif()
 endif()
 
+# SSE2NEON Detection
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*|aarch64.*)")
+    set(HAVE_NEON TRUE) 
+    set(HAVE_SSE TRUE)
+    message(NOTICE "Using ASIMD/NEON instructions with sse2neon translation")
+endif()
+
+IF (HAVE_NEON)
+    add_compile_definitions(HAVE_NEON=1)
+    add_compile_definitions(SSE2NEON_SUPPRESS_WARNINGS=1)
+    include_directories(${PROJECT_SOURCE_DIR}/third_party/sse2neon)
+endif()
+
 # Build settings
 set(CMAKE_MACOSX_RPATH ON)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)

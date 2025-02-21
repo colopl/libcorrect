@@ -4,11 +4,17 @@
 #include "correct/convolutional/convolutional.h"
 #include "correct/convolutional/sse/lookup.h"
 // BIG HEAPING TODO sort out the include mess
+
 #include "correct-sse.h"
-#ifdef _MSC_VER
-#include <intrin.h>
+
+#ifdef HAVE_NEON
+# include "sse2neon.h"
 #else
-#include <x86intrin.h>
+# ifdef _MSC_VER
+#  include <intrin.h>
+# else
+#  include <x86intrin.h>
+# endif
 #endif
 
 struct correct_convolutional_sse {

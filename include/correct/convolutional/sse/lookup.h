@@ -2,10 +2,15 @@
 #define CORRECT_CONVOLUTIONAL_SSE_LOOKUP_H
 
 #include "correct/convolutional/lookup.h"
-#ifdef _MSC_VER
-#include <intrin.h>
+
+#ifdef HAVE_NEON
+# include "sse2neon.h"
 #else
-#include <x86intrin.h>
+# ifdef _MSC_VER
+#  include <intrin.h>
+# else
+#  include <x86intrin.h>
+# endif
 #endif
 
 typedef uint16_t distance_oct_key_t;
