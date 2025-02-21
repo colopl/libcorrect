@@ -23,7 +23,7 @@ void oct_lookup_destroy(oct_lookup_t *octs) {
         }
 
         if (octs->distances) {
-            free(octs->distances);
+            ALIGNED_FREE(octs->distances);
         }
         
         free(octs);
@@ -125,7 +125,7 @@ oct_lookup_t *oct_lookup_create(unsigned int rate, unsigned int order, const uns
     octs->output_mask = (1 << (rate)) - 1;
     octs->output_width = rate;
 
-    octs->distances = (distance_oct_t *)malloc(octs->outputs_len * 2 * sizeof(uint64_t));
+    octs->distances = (distance_oct_t *)ALIGNED_MALLOC(octs->outputs_len * 2 * sizeof(uint64_t), 16);
     if (!octs->distances) {
         oct_lookup_destroy(octs);
         return NULL;
