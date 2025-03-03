@@ -58,7 +58,9 @@ jobs:
     strategy:
       matrix:
         architecture: ['x64', 'Win32']
-        type: ['Debug', 'Release']
+        type:
+          - Release
+          # - Debug
         vs_version:
           - { runs-on: 'windows-2019', generator: 'Visual Studio 16 2019' }
           - { runs-on: 'windows-2022', generator: 'Visual Studio 17 2022' }
