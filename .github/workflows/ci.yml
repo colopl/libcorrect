@@ -78,7 +78,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "${{ matrix.vs_version.generator }}" -A "${{ matrix.architecture }}"
+          cmake .. -G "${{ matrix.vs_version.generator }}" -A "${{ matrix.architecture }}" -DENABLE_LIBCORRECT_TEST=ON
           cmake --build . --config "${{ matrix.type }}" --target shim
           cmake --build . --config "${{ matrix.type }}" --target test_runners
           cd "tests"
