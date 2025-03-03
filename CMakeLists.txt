@@ -6,13 +6,15 @@ project(Correct
         DESCRIPTION "Forward Error Correction Library")
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED ON)        
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 include(CheckLibraryExists)
 include(CheckIncludeFiles)
 include(CheckCSourceCompiles)
 include(CMakePushCheckState)
 include(CheckCCompilerFlag)
+
+option(BUILD_TESTING "Build tests" OFF)
 
 # Compiler and build settings
 if(MSVC)
@@ -172,10 +174,12 @@ if(HAVE_SSE)
 endif()
 
 # Additional components
-add_subdirectory(util)
-add_subdirectory(tests)
-add_subdirectory(tools)
-# add_subdirectory(benchmarks)
+if(BUILD_TESTING)
+    add_subdirectory(util)
+    add_subdirectory(tests)
+    add_subdirectory(tools)
+    # add_subdirectory(benchmarks)
+endif()
 
 # Installation rules
 include(GNUInstallDirs)

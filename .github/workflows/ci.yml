@@ -51,9 +51,10 @@ jobs:
         run: |
           mkdir "build"
           cd "build"
-          cmake .. -DCMAKE_BUILD_TYPE="${{ matrix.type }}"
+          cmake .. -DCMAKE_BUILD_TYPE="${{ matrix.type }}" -DBUILD_TESTING=ON
           make -j"$(sysctl -n hw.ncpu)" shim
-          make check
+          cd "tests"
+          ctest -C "${{ matrix.type }}" --output-on-failure
   Windows:
     strategy:
       matrix:

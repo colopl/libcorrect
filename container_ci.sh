@@ -7,9 +7,11 @@ for COMPILER in "$(which "gcc")" "$(which "clang")"; do
         rm -rf "build"
         mkdir "build"
         cd "build"
-            cmake .. -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DCMAKE_C_COMPILER="${COMPILER}"
+            cmake .. -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DCMAKE_C_COMPILER="${COMPILER}" -DBUILD_TESTING=ON
             make -j"$(nproc)" shim
-            make check
+            cd "test"
+                ctest -C "${BUILD_TYPE}" --output-on-failure
+            cd -
         cd -
     done
 done
