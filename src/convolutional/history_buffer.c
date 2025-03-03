@@ -1,22 +1,62 @@
 #include "correct/convolutional/history_buffer.h"
 
-history_buffer *history_buffer_create(unsigned int min_traceback_length,
-                                      unsigned int traceback_group_length,
-                                      unsigned int renormalize_interval, unsigned int num_states,
-                                      shift_register_t highbit) {
-    history_buffer *buf = calloc(1, sizeof(history_buffer));
-
-    *(unsigned int *)&buf->min_traceback_length = min_traceback_length;
-    *(unsigned int *)&buf->traceback_group_length = traceback_group_length;
-    *(unsigned int *)&buf->cap = min_traceback_length + traceback_group_length;
-    *(unsigned int *)&buf->num_states = num_states;
-    *(shift_register_t *)&buf->highbit = highbit;
-
-    buf->history = malloc(buf->cap * sizeof(uint8_t *));
-    for (unsigned int i = 0; i < buf->cap; i++) {
-        buf->history[i] = calloc(num_states, sizeof(uint8_t));
+void history_buffer_destroy(history_buffer *buf) {
+    if (!buf) {
+        return;
     }
-    buf->fetched = malloc(buf->cap * sizeof(uint8_t));
+
+    for (unsigned int i = 0; i < buf->cap; i++) {
+        if (buf->history[i]) {
+            free(buf->history[i]);
+        }
+    }
+
+    if (buf->history) {
+        free(buf->history);
+    }
+
+    if (buf->fetched) {
+        free(buf->fetched);
+    }
+
+    free(buf);
+}
+
+history_buffer *history_buffer_create(unsigned int min_traceback_length, unsigned int traceback_group_length, unsigned int renormalize_interval, unsigned int num_states, shift_register_t highbit) {
+    history_buffer *buf = (history_buffer *)calloc(1, sizeof(history_buffer));
+    if (!buf) {
+        return NULL;
+    }
+
+    buf->min_traceback_length = min_traceback_length;
+    buf->traceback_group_length = traceback_group_length;
+    buf->cap = min_traceback_length + traceback_group_length;
+    buf->num_states = num_states;
+    buf->highbit = highbit;
+
+    buf->history = (uint8_t **)malloc(buf->cap * sizeof(uint8_t *));
+    if (!buf->history) {
+        history_buffer_destroy(buf);
+        return NULL;
+    }
+
+    for (unsigned int i = 0; i < buf->cap; i++) {
+        buf->history[i] = (uint8_t *)calloc(num_states, sizeof(uint8_t));
+        if (!buf->history[i]) {
+            for (unsigned int j = 0; j < i; j++) {
+                free(buf->history[j]);
+            }
+            free(buf->history);
+            history_buffer_destroy(buf);
+            return NULL;
+        } 
+    }
+
+    buf->fetched = (uint8_t *)malloc(buf->cap * sizeof(uint8_t));
+    if (!buf->fetched) {
+        history_buffer_destroy(buf);
+        return NULL;
+    }
 
     buf->index = 0;
     buf->len = 0;
@@ -27,26 +67,19 @@ history_buffer *history_buffer_create(unsigned int min_traceback_length,
     return buf;
 }
 
-void history_buffer_destroy(history_buffer *buf) {
-    for (unsigned int i = 0; i < buf->cap; i++) {
-        free(buf->history[i]);
-    }
-    free(buf->history);
-    free(buf->fetched);
-    free(buf);
-}
-
 void history_buffer_reset(history_buffer *buf) {
     buf->len = 0;
     buf->index = 0;
 }
 
-uint8_t *history_buffer_get_slice(history_buffer *buf) { return buf->history[buf->index]; }
+uint8_t *history_buffer_get_slice(history_buffer *buf) {
+    return buf->history[buf->index];
+}
 
-shift_register_t history_buffer_search(history_buffer *buf, const distance_t *distances,
-                                       unsigned int search_every) {
-    shift_register_t bestpath;
+shift_register_t history_buffer_search(history_buffer *buf, const distance_t *distances, unsigned int search_every) {
+    shift_register_t bestpath = 0;
     distance_t leasterror = USHRT_MAX;
+
     // search for a state with the least error
     for (shift_register_t state = 0; state < buf->num_states; state += search_every) {
         if (distances[state] < leasterror) {
@@ -54,19 +87,18 @@ shift_register_t history_buffer_search(history_buffer *buf, const distance_t *di
             bestpath = state;
         }
     }
+
     return bestpath;
 }
 
-void history_buffer_renormalize(history_buffer *buf, distance_t *distances,
-                                shift_register_t min_register) {
+void history_buffer_renormalize(history_buffer *buf, distance_t *distances, shift_register_t min_register) {
     distance_t min_distance = distances[min_register];
     for (shift_register_t i = 0; i < buf->num_states; i++) {
         distances[i] -= min_distance;
     }
 }
 
-void history_buffer_traceback(history_buffer *buf, shift_register_t bestpath,
-                              unsigned int min_traceback_length, bit_writer_t *output) {
+void history_buffer_traceback(history_buffer *buf, shift_register_t bestpath, unsigned int min_traceback_length, bit_writer_t *output) {
     unsigned int fetched_index = 0;
     shift_register_t highbit = buf->highbit;
     unsigned int index = buf->index;
@@ -86,12 +118,14 @@ void history_buffer_traceback(history_buffer *buf, shift_register_t bestpath,
         bestpath |= pathbit;
         bestpath >>= 1;
     }
+
     unsigned int prefetch_index = index;
     if (prefetch_index == 0) {
         prefetch_index = cap - 1;
     } else {
         prefetch_index--;
     }
+
     unsigned int len = buf->len;
     for (unsigned int j = min_traceback_length; j < len; j++) {
         index = prefetch_index;
@@ -112,12 +146,12 @@ void history_buffer_traceback(history_buffer *buf, shift_register_t bestpath,
         buf->fetched[fetched_index] = (pathbit ? 1 : 0);
         fetched_index++;
     }
+
     bit_writer_write_bitlist_reversed(output, buf->fetched, fetched_index);
     buf->len -= fetched_index;
 }
 
-void history_buffer_process_skip(history_buffer *buf, distance_t *distances, bit_writer_t *output,
-                                 unsigned int skip) {
+void history_buffer_process_skip(history_buffer *buf, distance_t *distances, bit_writer_t *output, unsigned int skip) {
     buf->index++;
     if (buf->index == buf->cap) {
         buf->index = 0;

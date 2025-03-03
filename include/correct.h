@@ -1,15 +1,18 @@
 #ifndef CORRECT_H
 #define CORRECT_H
+
 #include <stdint.h>
 
 #ifndef _MSC_VER
+#if defined(unix) || defined(__unix__) || defined(__unix)
 #include <unistd.h>
+#else
+#define ssize_t int
+#endif
 #else
 #include <stddef.h>
 typedef ptrdiff_t ssize_t;
 #endif
-
-
 
 // Convolutional Codes
 
@@ -41,8 +44,7 @@ typedef struct correct_convolutional correct_convolutional;
  *
  * If this call is successful, it returns a non-NULL pointer.
  */
-correct_convolutional *correct_convolutional_create(size_t inv_rate, size_t order,
-                                                    const correct_convolutional_polynomial_t *poly);
+correct_convolutional *correct_convolutional_create(size_t inv_rate, size_t order, const correct_convolutional_polynomial_t *poly);
 
 /* correct_convolutional_destroy releases all resources associated
  * with conv. This pointer should not be used for further calls
@@ -70,8 +72,7 @@ size_t correct_convolutional_encode_len(correct_convolutional *conv, size_t msg_
  * this is not an exact multiple of 8, then it occupies an additional
  * byte.
  */
-size_t correct_convolutional_encode(correct_convolutional *conv, const uint8_t *msg, size_t msg_len,
-                                    uint8_t *encoded);
+size_t correct_convolutional_encode(correct_convolutional *conv, const uint8_t *msg, size_t msg_len, uint8_t *encoded);
 
 /* correct_convolutional_decode uses the given conv instance to
  * decode a block encoded by correct_convolutional_encode. This
@@ -96,8 +97,7 @@ size_t correct_convolutional_encode(correct_convolutional *conv, const uint8_t *
  * This function returns the number of bytes written to msg. If
  * it fails, it returns -1.
  */
-ssize_t correct_convolutional_decode(correct_convolutional *conv, const uint8_t *encoded,
-                                     size_t num_encoded_bits, uint8_t *msg);
+ssize_t correct_convolutional_decode(correct_convolutional *conv, const uint8_t *encoded, size_t num_encoded_bits, uint8_t *msg);
 
 /* correct_convolutional_decode_soft uses the given conv instance
  * to decode a block encoded by correct_convolutional_encode and
@@ -120,9 +120,7 @@ ssize_t correct_convolutional_decode(correct_convolutional *conv, const uint8_t 
  * This function returns the number of bytes written to msg. If
  * it fails, it returns -1.
  */
-ssize_t correct_convolutional_decode_soft(correct_convolutional *conv,
-                                          const correct_convolutional_soft_t *encoded,
-                                          size_t num_encoded_bits, uint8_t *msg);
+ssize_t correct_convolutional_decode_soft(correct_convolutional *conv, const correct_convolutional_soft_t *encoded, size_t num_encoded_bits, uint8_t *msg);
 
 // Reed-Solomon
 
@@ -195,10 +193,7 @@ static const uint16_t correct_rs_primitive_polynomial_ccsds =
  * generator_root_gap are 1 and 1. Not all combinations of
  * values produce valid codes.
  */
-correct_reed_solomon *correct_reed_solomon_create(uint16_t primitive_polynomial,
-                                                  uint8_t first_consecutive_root,
-                                                  uint8_t generator_root_gap,
-                                                  size_t num_roots);
+correct_reed_solomon *correct_reed_solomon_create(uint16_t primitive_polynomial, uint8_t first_consecutive_root, uint8_t generator_root_gap, size_t num_roots);
 
 /* correct_reed_solomon_encode uses the rs instance to encode
  * parity information onto a block of data. msg_length should be
@@ -214,8 +209,7 @@ correct_reed_solomon *correct_reed_solomon_create(uint16_t primitive_polynomial,
  *
  * This function returns the number of bytes written to encoded.
  */
-ssize_t correct_reed_solomon_encode(correct_reed_solomon *rs, const uint8_t *msg, size_t msg_length,
-                                    uint8_t *encoded);
+ssize_t correct_reed_solomon_encode(correct_reed_solomon *rs, const uint8_t *msg, size_t msg_length, uint8_t *encoded);
 
 /* correct_reed_solomon_decode uses the rs instance to decode
  * a payload from a block containing payload and parity bytes.
@@ -232,8 +226,7 @@ ssize_t correct_reed_solomon_encode(correct_reed_solomon *rs, const uint8_t *msg
  * This function returns a positive number of bytes written to msg
  * if it has decoded or -1 if it has encountered an error.
  */
-ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *encoded,
-                                    size_t encoded_length, uint8_t *msg);
+ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *encoded, size_t encoded_length, uint8_t *msg);
 
 /* correct_reed_solomon_decode_with_erasures uses the rs
  * instance to decode a payload from a block containing payload
@@ -262,10 +255,7 @@ ssize_t correct_reed_solomon_decode(correct_reed_solomon *rs, const uint8_t *enc
  * This function returns a positive number of bytes written to msg
  * if it has decoded or -1 if it has encountered an error.
  */
-ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, const uint8_t *encoded,
-                                                  size_t encoded_length,
-                                                  const uint8_t *erasure_locations,
-                                                  size_t erasure_length, uint8_t *msg);
+ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, const uint8_t *encoded, size_t encoded_length, const uint8_t *erasure_locations, size_t erasure_length, uint8_t *msg);
 
 /* correct_reed_solomon_destroy releases the resources
  * associated with rs. This pointer should not be
@@ -273,5 +263,4 @@ ssize_t correct_reed_solomon_decode_with_erasures(correct_reed_solomon *rs, cons
  */
 void correct_reed_solomon_destroy(correct_reed_solomon *rs);
 
-#endif
-
+#endif  /* CORRECT_H */

@@ -1,5 +1,6 @@
-#ifndef CORRECT_CONVOLUTIONAL_LOOKUP
-#define CORRECT_CONVOLUTIONAL_LOOKUP
+#ifndef CORRECT_CONVOLUTIONAL_LOOKUP_H
+#define CORRECT_CONVOLUTIONAL_LOOKUP_H
+
 #include "correct/convolutional.h"
 
 typedef unsigned int distance_pair_key_t;
@@ -15,13 +16,9 @@ typedef struct {
     distance_pair_t *distances;
 } pair_lookup_t;
 
-void fill_table(unsigned int order,
-                unsigned int rate,
-                const polynomial_t *poly,
-                unsigned int *table);
-pair_lookup_t pair_lookup_create(unsigned int rate,
-                                 unsigned int order,
-                                 const unsigned int *table);
-void pair_lookup_destroy(pair_lookup_t pairs);
-void pair_lookup_fill_distance(pair_lookup_t pairs, distance_t *distances);
-#endif
+void fill_table(unsigned int order, unsigned int rate, const polynomial_t *poly, unsigned int *table);
+pair_lookup_t *pair_lookup_create(unsigned int rate, unsigned int order, const unsigned int *table);
+void pair_lookup_destroy(pair_lookup_t *pairs);
+void pair_lookup_fill_distance(pair_lookup_t *pairs, distance_t *distances);
+
+#endif /* CORRECT_CONVOLUTIONAL_LOOKUP_H */
