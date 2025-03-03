@@ -100,10 +100,15 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*|aarch64.*)")
     message(NOTICE "Using ASIMD/NEON instructions with sse2neon translation")
 endif()
 
-IF (HAVE_NEON)
+if(HAVE_NEON)
     add_compile_definitions(HAVE_NEON=1)
     add_compile_definitions(SSE2NEON_SUPPRESS_WARNINGS=1)
     include_directories(${PROJECT_SOURCE_DIR}/third_party/sse2neon)
+    if(MSVC)
+        add_compile_definitions(__ARM_NEON__)
+    else()
+        add_compile_options(-mfpu=neon)
+    endif()
 endif()
 
 # Build settings
