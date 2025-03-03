@@ -51,8 +51,8 @@ jobs:
         run: |
           mkdir "build"
           cd "build"
-          cmake .. -DCMAKE_BUILD_TYPE="${{ matrix.type }}" -DBUILD_TESTING=ON
-          make -j"$(sysctl -n hw.ncpu)" shim
+          cmake .. -DCMAKE_BUILD_TYPE="${{ matrix.type }}" -DENABLE_LIBCORRECT_TEST=ON
+          make -j"$(sysctl -n hw.ncpu)" shim test_runners
           cd "tests"
           ctest -C "${{ matrix.type }}" --output-on-failure
   Windows:

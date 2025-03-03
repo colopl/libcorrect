@@ -14,7 +14,7 @@ include(CheckCSourceCompiles)
 include(CMakePushCheckState)
 include(CheckCCompilerFlag)
 
-option(BUILD_TESTING "Build tests" OFF)
+option(ENABLE_LIBCORRECT_TEST "Build tests" OFF)
 
 # Compiler and build settings
 if(MSVC)
@@ -174,7 +174,7 @@ if(HAVE_SSE)
 endif()
 
 # Additional components
-if(BUILD_TESTING)
+if(ENABLE_LIBCORRECT_TEST)
     add_subdirectory(util)
     add_subdirectory(tests)
     add_subdirectory(tools)
